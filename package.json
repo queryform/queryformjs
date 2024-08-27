@@ -4,8 +4,15 @@
   "description": "Queryform allows users to easily track query string parameters, save them to local storage and automatically populate form fields on their website. It is a dependency free JS module that connects your website to the Queryform applications backend.",
   "main": "src/queryform.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "release": "vite build"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.4.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/queryform/queryformjs"
+  }
 }
