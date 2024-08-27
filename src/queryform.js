@@ -80,15 +80,9 @@ class QueryForm {
   }
 
   getStoredParams() {
-    if (this.#isLocalStorageAvailable()) {
-      let utms = JSON.parse(localStorage.getItem('queryform_data'));
-      if (utms !== null) {
-        return utms;
-      }
-      return {};
-    } else {
-      return {};
-    }
+      if (!this.#isLocalStorageAvailable()) return {};
+      const storedParams = localStorage.getItem('queryform_data');
+      return storedParams ? JSON.parse(storedParams) : {};
   }
 
   #populateFormInputs(utms, domainUTMs) {

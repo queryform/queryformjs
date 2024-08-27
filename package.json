@@ -11,8 +11,16 @@
   "devDependencies": {
     "vite": "^5.4.2"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/queryform/queryformjs"
-  }
+    "url": "https://github.com/queryform/queryformjs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/queryform/queryformjs/issues"
+  },
+  "homepage": "https://queryform.co"
 }
