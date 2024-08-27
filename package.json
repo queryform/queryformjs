@@ -1,0 +1,11 @@
+{
+  "name": "queryformjs",
+  "version": "0.1.0",
+  "description": "Queryform allows users to easily track query string parameters, save them to local storage and automatically populate form fields on their website. It is a dependency free JS module that connects your website to the Queryform applications backend.",
+  "main": "src/queryform.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
