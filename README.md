@@ -26,14 +26,76 @@ You can install `QueryformJS` via npm:
 npm install @queryform/queryformjs
 ```
 
+```bash
+yard add @queryform/queryformjs
+```
+
 ## Usage
 
-### Importing the Library
+You can use `QueryformJS` in a standard HTML setup by including the script and initializing it when the page loads. Here’s an example:
 
-To use the QueryformJS library, import it into your JavaScript file:
+```html
+<script src="https://queryform.test/queryform.js" defer type="module"></script>
+<script type="text/javascript" defer>
+  window.addEventListener('load', function() {
+    const qf = new Queryform('queryform-website-specific-api-key');
+    qf.init();
+  });
+</script>
+```
+This approach is straightforward and can be used in any standard web environment where you want to quickly integrate QueryformJS.
+
+### Nuxt 3 Plugin Integration
+
+For Nuxt 3 users, you can easily integrate QueryformJS as a plugin. Here’s an example of how to set it up:
 
 ```js
 import Queryform from '@queryform/queryformjs';
+
+export default defineNuxtPlugin(() => {
+  const nuxtApp = useNuxtApp();
+  nuxtApp.hook('page:finish', async () => {
+
+    // API Driven
+    const queryform = new Queryform('queryform-website-specific-api-key');
+    queryform.init();
+
+    // Local Driven
+    // const queryform = new Queryform();
+    // queryform.init({ debug: false, local: true }, [
+    //     { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
+    //     { param: 'utm_medium', class_name: 'qf_utm_medium' }
+    // ]);
+
+  });
+});
+```
+This setup ensures that QueryformJS runs every time a page is fully loaded, making it a great fit for Nuxt 3’s dynamic routing environment.
+
+### Next.js Integration
+
+In a Next.js project, you can integrate QueryformJS by using it in a custom hook or directly in your components/pages. Here’s an example using a custom hook:
+
+```js
+import { useEffect } from 'react';
+import Queryform from '@queryform/queryformjs';
+
+const useQueryform = () => {
+  useEffect(() => {
+    // API Driven
+    const queryform = new Queryform('queryform-website-specific-api-key');
+    queryform.init();
+
+    // Local Driven
+    // const queryform = new Queryform();
+    // queryform.init({ debug: false, local: true }, [
+    //     { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
+    //     { param: 'utm_medium', class_name: 'qf_utm_medium' }
+    // ]);
+  }, []);
+};
+
+export default useQueryform;
 ```
 
 ### Scenarios
@@ -43,7 +105,7 @@ import Queryform from '@queryform/queryformjs';
 In this scenario, the domain parameters (UTMs) are retrieved from the Queryform API backend, where you can easily control your parameters from an easy to use interface that does not require code updates to adjust tracked query parameters.
 
 ```js
-const queryform = new Queryform('9cde42e9-8a9a-40c7-adee-6364fdb6f709');
+const queryform = new Queryform('queryform-website-specific-api-key');
 queryform.init();
 ```
 
@@ -58,8 +120,6 @@ queryform.init({ debug: false, local: true }, [
     { param: 'utm_medium', class_name: 'qf_utm_medium' }
 ]);
 ```
-
-##
 
 ## Notes
 
