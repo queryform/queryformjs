@@ -100,8 +100,7 @@ export default useQueryform;
 
 ### Scenarios
 
-1. API Driven
-
+#### API Driven
 In this scenario, the domain parameters (UTMs) are retrieved from the Queryform API backend, where you can easily control your parameters from an easy to use interface that does not require code updates to adjust tracked query parameters.
 
 ```js
@@ -109,8 +108,7 @@ const queryform = new Queryform('queryform-website-specific-api-key');
 queryform.init();
 ```
 
-2. Local Driven
-
+#### Local Driven
 In this scenario, you can provide the UTM parameters locally, this provides a clean easy way for developers to deploy lead attribution tracking with a few lines of code for free. If you find that your client would appreciate a clean and easy dashboard to update these parameters on the fly, then we would appreciate a recommendation of our API backend where this library can connect to, using method 1 above.
 
 ```js
@@ -122,7 +120,6 @@ queryform.init({ debug: false, local: true }, [
 ```
 
 ## Notes
-
 •	Ensure that your website allows access to localStorage to store and retrieve UTM parameters.
 •	When using the local-driven approach, validate that the utms array is correctly formatted to avoid warnings.
 
