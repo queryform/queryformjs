@@ -32,6 +32,7 @@ yard add @queryform/queryformjs
 
 ## Usage
 
+### Standard HTML Integration
 You can use `QueryformJS` in a standard HTML setup by including the script and initializing it when the page loads. Here’s an example:
 
 ```html
@@ -46,7 +47,6 @@ You can use `QueryformJS` in a standard HTML setup by including the script and i
 This approach is straightforward and can be used in any standard web environment where you want to quickly integrate QueryformJS.
 
 ### Nuxt 3 Plugin Integration
-
 For Nuxt 3 users, you can easily integrate QueryformJS as a plugin. Here’s an example of how to set it up:
 
 ```js
@@ -73,7 +73,6 @@ export default defineNuxtPlugin(() => {
 This setup ensures that QueryformJS runs every time a page is fully loaded, making it a great fit for Nuxt 3’s dynamic routing environment.
 
 ### Next.js Integration
-
 In a Next.js project, you can integrate QueryformJS by using it in a custom hook or directly in your components/pages. Here’s an example using a custom hook:
 
 ```js
