@@ -141,8 +141,8 @@ queryform.init({ local: true }, [
 ```
 In this example:
 
-	•	utm_campaign: This is the query string parameter that Google (or another service) might include in the URL.
-	•	qf_utm_campaign: This is the CSS class that QueryformJS will look for in your form inputs.
+- utm_campaign: This is the query string parameter that Google (or another service) might include in the URL.
+- qf_utm_campaign: This is the CSS class that QueryformJS will look for in your form inputs.
 
 ### HTML Example
 
