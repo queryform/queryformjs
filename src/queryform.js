@@ -1,6 +1,6 @@
 class Queryform {
 
-  constructor(websiteId, apiRoute = 'https://queryform.test/api/website/') {
+  constructor(websiteId = null, apiRoute = 'https://queryform.test/api/website/') {
     this.websiteId = websiteId;
     this.domainUTMs = [];
     this.apiRoute = apiRoute;
@@ -32,17 +32,39 @@ class Queryform {
    * @example
    * Retrieve domain parameters from Queryform API
    * const queryform = new Queryform('xxxx-xxxx-xxxx-xxxx');
-   * queryform.init({ debug: true });
+   * queryform.init();
+   * @example
+   * Use local domain parameters
+   * const queryform = new Queryform();
+   * queryform.init({ local: true }, [ { param: 'utm_source', class_name: 'qf_utm_source' } ]);
    */
 
-  init(config = { debug: false }) {
-    this.#fetchDomainParams()
-      .then(() => this.#configureQueryform())
-      .finally(() => {
-        if (config.debug) {
-          this.#logInitialization();
-        }
-      });
+  async init(config = { debug: false, local: false }, utms = []) {
+    this.#logInitialization();
+    config.local ? await this.#fetchLocalParams(utms) : await this.#fetchDomainParams();
+    await this.#configureQueryform();
+  }
+
+  /**
+   * Fetch local domain parameters
+   * @param {Array} utms - Local domain parameters
+   * @returns {void}
+   * @private
+   */
+
+  async #fetchLocalParams(utms) {
+    // validate the format of the utms array
+    if (!Array.isArray(utms)) {
+      console.warn('Invalid utms array:', utms);
+      return;
+    }
+    // validate the format of the utms array sub-items
+    if (utms.some(({ param, class_name }) => !param || !class_name)) {
+      console.warn('Invalid utms array sub-items:', utms);
+      return;
+    }
+    // store the utms array
+    this.domainUTMs = utms;
   }
 
   /**
@@ -51,7 +73,7 @@ class Queryform {
    * @private
    */
 
-  async #configureQueryform() {
+  #configureQueryform() {
     // Check if domainUTMs is empty
     const queryParams = this.#parseURLParams();
     // Store the query params

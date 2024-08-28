@@ -1,14 +1,14 @@
-var h = (a) => {
-  throw TypeError(a);
+var h = (o) => {
+  throw TypeError(o);
 };
-var P = (a, t, e) => t.has(a) || h("Cannot " + e);
-var m = (a, t, e) => t.has(a) ? h("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(a) : t.set(a, e);
-var r = (a, t, e) => (P(a, t, "access private method"), e);
-var s, p, g, y, c, b, S, w;
-class T {
-  constructor(t, e = "https://queryform.test/api/website/") {
+var U = (o, t, a) => t.has(o) || h("Cannot " + a);
+var m = (o, t, a) => t.has(o) ? h("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(o) : t.set(o, a);
+var r = (o, t, a) => (U(o, t, "access private method"), a);
+var s, p, g, y, w, c, b, S, x;
+class I {
+  constructor(t = null, a = "https://queryform.test/api/website/") {
     m(this, s);
-    this.websiteId = t, this.domainUTMs = [], this.apiRoute = e;
+    this.websiteId = t, this.domainUTMs = [], this.apiRoute = a;
   }
   /**
    * Initialize the Queryform
@@ -18,12 +18,14 @@ class T {
    * @example
    * Retrieve domain parameters from Queryform API
    * const queryform = new Queryform('xxxx-xxxx-xxxx-xxxx');
-   * queryform.init({ debug: true });
+   * queryform.init();
+   * @example
+   * Use local domain parameters
+   * const queryform = new Queryform();
+   * queryform.init({ local: true }, [ { param: 'utm_source', class_name: 'qf_utm_source' } ]);
    */
-  init(t = { debug: !1 }) {
-    r(this, s, p).call(this).then(() => r(this, s, g).call(this)).finally(() => {
-      t.debug && r(this, s, y).call(this);
-    });
+  async init(t = { debug: !1, local: !1 }, a = []) {
+    r(this, s, w).call(this), t.local ? await r(this, s, g).call(this, a) : await r(this, s, p).call(this), await r(this, s, y).call(this);
   }
   /**
    * Get stored parameters from localStorage
@@ -40,17 +42,32 @@ s = new WeakSet(), p = async function() {
   } catch (t) {
     console.warn("Error fetching domain parameters:", t);
   }
-}, g = async function() {
+}, g = async function(t) {
+  if (!Array.isArray(t)) {
+    console.warn("Invalid utms array:", t);
+    return;
+  }
+  if (t.some(({ param: a, class_name: e }) => !a || !e)) {
+    console.warn("Invalid utms array sub-items:", t);
+    return;
+  }
+  this.domainUTMs = t;
+}, /**
+ * Configure the Queryform
+ * @returns {void}
+ * @private
+ */
+y = function() {
   const t = r(this, s, b).call(this);
   r(this, s, S).call(this, t);
-  const e = this.getStoredParams();
-  Object.keys(e).length > 0 && r(this, s, w).call(this, e, this.domainUTMs);
+  const a = this.getStoredParams();
+  Object.keys(a).length > 0 && r(this, s, x).call(this, a, this.domainUTMs);
 }, /**
  * Log initialization message
  * @returns {void}
  * @private
  */
-y = function() {
+w = function() {
   console.log(
     "%c Queryform%c v1.0%c Data synced.",
     "background: #222; color: #2563eb; padding: 10px;",
@@ -70,10 +87,10 @@ c = function() {
  * @private
  */
 b = function() {
-  const t = new URLSearchParams(window.location.search), e = {};
-  return this.domainUTMs.forEach(({ param: o }) => {
-    t.has(o) && (e[o] = t.get(o));
-  }), Object.keys(e).length > 0 ? e : null;
+  const t = new URLSearchParams(window.location.search), a = {};
+  return this.domainUTMs.forEach(({ param: e }) => {
+    t.has(e) && (a[e] = t.get(e));
+  }), Object.keys(a).length > 0 ? a : null;
 }, /**
  * Store URL parameters in localStorage
  * @param {Object} queryParams - URL parameters
@@ -82,13 +99,13 @@ b = function() {
  */
 S = function(t) {
   if (!r(this, s, c).call(this) || !t) return;
-  const e = this.getStoredParams() || {};
-  return this.domainUTMs.forEach(({ param: o, class_name: u }) => {
-    t[o] && (e[o] = {
-      class_name: u,
-      value: t[o]
+  const a = this.getStoredParams() || {};
+  return this.domainUTMs.forEach(({ param: e, class_name: l }) => {
+    t[e] && (a[e] = {
+      class_name: l,
+      value: t[e]
     });
-  }), localStorage.setItem("queryform_data", JSON.stringify(e)), e;
+  }), localStorage.setItem("queryform_data", JSON.stringify(a)), a;
 }, /**
  * Populate form inputs with stored parameters
  * @param {Object} storedParams - Stored parameters
@@ -96,24 +113,24 @@ S = function(t) {
  * @returns {void}
  * @private
  */
-w = function(t, e) {
-  const o = Object.values(t).map(
+x = function(t, a) {
+  const e = Object.values(t).map(
     ({ class_name: i }) => `.${i}`
   );
-  document.querySelectorAll(o.join(",")).forEach((i) => {
+  document.querySelectorAll(e.join(",")).forEach((i) => {
     var d;
-    const l = i.tagName.toLowerCase() === "input" ? i : i.querySelector("input");
-    if (!l) return;
+    const u = i.tagName.toLowerCase() === "input" ? i : i.querySelector("input");
+    if (!u) return;
     const f = i.className.split(" ").find(
-      (n) => o.includes(`.${n}`)
+      (n) => e.includes(`.${n}`)
     );
     if (f) {
-      const n = e.find(({ class_name: x }) => x === f);
-      n && (l.value = ((d = t[n.param]) == null ? void 0 : d.value) || "");
+      const n = a.find(({ class_name: P }) => P === f);
+      n && (u.value = ((d = t[n.param]) == null ? void 0 : d.value) || "");
     }
   });
 };
 export {
-  T as default
+  I as default
 };
 //# sourceMappingURL=queryform.js.map
