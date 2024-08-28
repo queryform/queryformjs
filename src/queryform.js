@@ -17,11 +17,10 @@ class QueryForm {
       }
   }
 
-  init(config = { debug: false }) {
+  async init(config = { debug: false }) {
 
-    this.#getDomainParamsFromQueryform().then(() => {
-      this.#configureQueryform();
-    });
+    await this.#getDomainParamsFromQueryform()
+    await this.#configureQueryform();
 
     if(config.debug){
       console.log(`%c Queryform` + `%c v1.0` + `%c Data synced.`, 'background: #222; color: #2563eb; padding: 10px 10px 10px 10px;', 'background: #222; color: #fff; font-size:8px; padding: 12px 10px 11px 0;', 'background: #222; color: #777; font-size:8px; padding: 12px 10px 11px 0');
@@ -29,7 +28,7 @@ class QueryForm {
 
   }
 
-  #configureQueryform() {
+  async #configureQueryform() {
       const queryStrings = this.#parseURLParams();
       this.#saveParams(queryStrings);
       const utms = this.getStoredParams();
@@ -80,9 +79,13 @@ class QueryForm {
   }
 
   getStoredParams() {
-      if (!this.#isLocalStorageAvailable()) return {};
-      const storedParams = localStorage.getItem('queryform_data');
-      return storedParams ? JSON.parse(storedParams) : {};
+    if (this.#isLocalStorageAvailable()) {
+      let utms = JSON.parse(localStorage.getItem('queryform_data'));
+      if (utms !== null) {
+        return utms;
+      }
+    }
+    return {};
   }
 
   #populateFormInputs(utms, domainUTMs) {
