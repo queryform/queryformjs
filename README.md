@@ -1,13 +1,22 @@
 # QueryformJS
 
-`QueryformJS` is a JavaScript library designed to help you manage UTM parameters across your website forms, whether you're fetching them from an API or handling them locally. This utility is useful for tracking campaigns and storing UTM parameters in local storage to populate form inputs with the appropriate values.
+`QueryformJS` is a powerful JavaScript library designed to streamline the management of UTM parameters across your website forms. Whether you're fetching them from an API or handling them locally, this utility is invaluable for tracking campaign data and storing UTM parameters in local storage. It automatically populates form inputs with the corresponding values, providing a seamless way to capture attribution data directly within your forms.
 
-## Usecase
-You or your client is running ad or affiliate campaigns and you want to see attribution data in your form entries. With Queryfrom you can easily track, save to local storage and append the data to your form inputs that match the defined settins. Let's say you're running a Google Adwords campaign and you would like to know if the user contacting you came from an ad, sure you can go check Google Analytics, or your various other tools, but wouldn't it be nice to just show that information in the email itself? That is where queryform comes in.
+## Use Case
 
-If you're a developer this package is an ES module, making it seamless while working with cutting edge frameworks like Vue, React, Next or Nuxt. Simply import the package, initialize the class and run the init function using one of the 2 provided setup methods (API driven - paid) or (Local driven - free).
+Are you or your client running ad or affiliate campaigns? Do you want to see attribution data directly in your form entries? With `QueryformJS`, you can effortlessly track UTM parameters, save them to local storage, and append them to your form inputs based on predefined settings. For example, if you're running a Google AdWords campaign and want to know if a user contacting you came from an ad, `QueryformJS` can display that information directly in the email you receive from the form submission. This saves you from having to check multiple analytics tools, making the data instantly accessible.
 
-Queryform.co provides a clean interface for working with these parameters in an asyncrnohouse fashion, by leveraging our application you or your client can easily update parameters on the fly with out the need to update your code. To learn more please visit https://queryform.co
+### Key Benefits:
+- **Direct Attribution Data**: See where your users are coming from directly in the form submissions, perfect for instant insight without needing to dive into analytics platforms.
+- **Flexible Integration**: As an ES module, `QueryformJS` integrates seamlessly with modern JavaScript frameworks like Vue, React, Next.js, or Nuxt.js.
+- **Simple Setup**: Import the package, initialize the class, and run the `init` function using one of the two provided setup methods:
+  - **API Driven** (paid): Fetch and manage UTM parameters via a centralized API.
+  - **Local Driven** (free): Handle UTM parameters locally with no external dependencies.
+
+### Using Queryform.co
+For an enhanced experience, consider using [Queryform.co](https://queryform.co), a platform that offers a clean and asynchronous interface for managing UTM parameters. With Queryform.co, you or your client can easily update parameters on the fly without needing to alter your code. This allows for dynamic and efficient management of your campaign tracking efforts.
+
+To learn more, visit [Queryform.co](https://queryform.co).
 
 ## Installation
 
