@@ -119,7 +119,7 @@ class Queryform {
 
 }
 
-export default QueryForm;
+export default Queryform;
 
 // Optionally, add it to the window object
 // window.QueryForm = QueryForm;
