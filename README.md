@@ -156,7 +156,7 @@ Given the above configuration, QueryformJS will look for form inputs like the fo
   <input type="hidden" />
 </div>
 ```
-QueryformJS will automatically find these elements, and if the corresponding utm_campaign parameter is found in the URL, it will populate the input with the value from the query string.
+QueryformJS will automatically find these elements, and if the corresponding utm_campaign parameter is found in the URL, or has been previously saved to local storage from a different time it will populate the input with the value from the query string.
 
 ## Flexibility
 
