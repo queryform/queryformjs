@@ -1,4 +1,4 @@
-class QueryForm {
+class Queryform {
 
   constructor(websiteId, apiRoute = 'https://queryform.test/api/website/') {
     this.websiteId = websiteId;
@@ -6,7 +6,7 @@ class QueryForm {
     this.apiRoute = apiRoute;
   }
 
-  async #getDomainParamsFromQueryform() {
+ async #getDomainParamsFromQueryform() {
       try {
         const response = await fetch(this.apiRoute + this.websiteId);
         if (response.ok) {
@@ -17,10 +17,11 @@ class QueryForm {
       }
   }
 
-  async init(config = { debug: false }) {
+  init(config = { debug: false }) {
 
-    await this.#getDomainParamsFromQueryform()
-    await this.#configureQueryform();
+    this.#getDomainParamsFromQueryform().then(() => {
+      this.#configureQueryform();
+    });
 
     if(config.debug){
       console.log(`%c Queryform` + `%c v1.0` + `%c Data synced.`, 'background: #222; color: #2563eb; padding: 10px 10px 10px 10px;', 'background: #222; color: #fff; font-size:8px; padding: 12px 10px 11px 0;', 'background: #222; color: #777; font-size:8px; padding: 12px 10px 11px 0');
@@ -29,14 +30,14 @@ class QueryForm {
   }
 
   async #configureQueryform() {
-      const queryStrings = this.#parseURLParams();
-      this.#saveParams(queryStrings);
-      const utms = this.getStoredParams();
-      // Check if the domain has any utm parameters stored in local storage
-      if(Object.keys(utms).length !== 0){
-          this.#populateFormInputs(utms, this.domainUTMs);
-      }
+    const queryStrings = this.#parseURLParams();
+    this.#saveParams(queryStrings);
+    const utms = this.getStoredParams();
+    // Check if the domain has any utm parameters stored in local storage
+    if(Object.keys(utms).length !== 0){
+        this.#populateFormInputs(utms, this.domainUTMs);
     }
+  }
 
   #isLocalStorageAvailable() {
     return typeof(Storage) !== 'undefined';
@@ -63,7 +64,6 @@ class QueryForm {
         if (!utms) {
           utms = {};
         }
-
         this.domainUTMs.forEach((domainUTM) => {
           if (queryStrings[domainUTM.param]) {
             utms[domainUTM.param] = {
@@ -72,7 +72,6 @@ class QueryForm {
             };
           }
         });
-
         localStorage.setItem('queryform_data', JSON.stringify(utms));
       }
     }
