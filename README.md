@@ -118,9 +118,53 @@ queryform.init({ debug: false, local: true }, [
 ]);
 ```
 
+## Parameter Formatting for Local Tracking
+
+When using `QueryformJS` for local tracking, you'll define a set of parameters that map to specific fields in the query string and correspond to form inputs on your webpage. Here's how it works:
+
+### Parameters Explained
+
+- **param**: This is the key that represents the field you are looking for in the query string. For example, if a user arrives at your site via a Google AdWords campaign, Google might send a parameter like `utm_campaign` in the URL. This would be the value you use for the `param` field.
+
+- **class_name**: This is the CSS class that `QueryformJS` will search for when looking to populate your form inputs. The class name can be applied directly to the input element (such as a hidden input field) or to a parent element that wraps the input. This flexibility allows you to organize your HTML as needed while still enabling `QueryformJS` to correctly find and populate the input.
+
+### Example
+
+Here’s an example of how to set up parameters for local tracking:
+
+```javascript
+const queryform = new Queryform();
+queryform.init({ local: true }, [
+    { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
+    { param: 'utm_medium', class_name: 'qf_utm_medium' }
+]);
+```
+In this example:
+
+	•	utm_campaign: This is the query string parameter that Google (or another service) might include in the URL.
+	•	qf_utm_campaign: This is the CSS class that QueryformJS will look for in your form inputs.
+
+### HTML Example
+
+Given the above configuration, QueryformJS will look for form inputs like the following:
+```html
+<!-- Directly on the input element -->
+<input type="hidden" class="qf_utm_campaign" />
+
+<!-- Or on a parent element -->
+<div class="qf_utm_campaign">
+  <input type="hidden" />
+</div>
+```
+QueryformJS will automatically find these elements, and if the corresponding utm_campaign parameter is found in the URL, it will populate the input with the value from the query string.
+
+## Flexibility
+
+This setup allows you to easily track various UTM parameters and other query string values by defining the appropriate param and class_name pairs in your code. This makes QueryformJS a highly flexible tool for form tracking and campaign attribution.
+
 ## Notes
-•	Ensure that your website allows access to localStorage to store and retrieve UTM parameters.
-•	When using the local-driven approach, validate that the utms array is correctly formatted to avoid warnings.
+- LocalStorage is required to store and retrieve UTM parameters. This is what lets us track users over time from the same browser.
+- When using the local-driven approach, validate that the utms array is correctly formatted to avoid warnings.
 
 ## License
 
