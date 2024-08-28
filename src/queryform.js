@@ -6,120 +6,172 @@ class Queryform {
     this.apiRoute = apiRoute;
   }
 
- async #getDomainParamsFromQueryform() {
-      try {
-        const response = await fetch(this.apiRoute + this.websiteId);
-        if (response.ok) {
-          this.domainUTMs = await response.json();
-        }
-      } catch (err) {
-        console.warn('Something went wrong.', err);
+  /**
+   * Fetch domain parameters from the API
+   * @returns {Promise<void>}
+   */
+
+  async #fetchDomainParams() {
+    try {
+      const response = await fetch(`${this.apiRoute}${this.websiteId}`);
+      if (response.ok) {
+        this.domainUTMs = await response.json();
+      } else {
+        console.warn('Failed to fetch domain parameters:', response.statusText);
       }
+    } catch (err) {
+      console.warn('Error fetching domain parameters:', err);
+    }
   }
+
+  /**
+   * Initialize the Queryform
+   * @param {Object} config - Configuration object
+   * @param {boolean} config.debug - Enable debug mode
+   * @returns {void}
+   * @example
+   * Retrieve domain parameters from Queryform API
+   * const queryform = new Queryform('xxxx-xxxx-xxxx-xxxx');
+   * queryform.init({ debug: true });
+   */
 
   init(config = { debug: false }) {
-
-    this.#getDomainParamsFromQueryform().then(() => {
-      this.#configureQueryform();
-    });
-
-    if(config.debug){
-      console.log(`%c Queryform` + `%c v1.0` + `%c Data synced.`, 'background: #222; color: #2563eb; padding: 10px 10px 10px 10px;', 'background: #222; color: #fff; font-size:8px; padding: 12px 10px 11px 0;', 'background: #222; color: #777; font-size:8px; padding: 12px 10px 11px 0');
-    }
-
+    this.#fetchDomainParams()
+      .then(() => this.#configureQueryform())
+      .finally(() => {
+        if (config.debug) {
+          this.#logInitialization();
+        }
+      });
   }
+
+  /**
+   * Configure the Queryform
+   * @returns {void}
+   * @private
+   */
 
   async #configureQueryform() {
-    const queryStrings = this.#parseURLParams();
-    this.#saveParams(queryStrings);
-    const utms = this.getStoredParams();
-    // Check if the domain has any utm parameters stored in local storage
-    if(Object.keys(utms).length !== 0){
-        this.#populateFormInputs(utms, this.domainUTMs);
+    // Check if domainUTMs is empty
+    const queryParams = this.#parseURLParams();
+    // Store the query params
+    this.#storeParams(queryParams);
+    // Get the stored params
+    const storedParams = this.getStoredParams();
+    // Populate the form inputs
+    if (Object.keys(storedParams).length > 0) {
+      this.#populateFormInputs(storedParams, this.domainUTMs);
     }
   }
 
-  #isLocalStorageAvailable() {
-    return typeof(Storage) !== 'undefined';
+  /**
+   * Log initialization message
+   * @returns {void}
+   * @private
+   */
+
+  #logInitialization() {
+    // Branded console log message
+    console.log(
+      `%c Queryform` + `%c v1.0` + `%c Data synced.`,
+      'background: #222; color: #2563eb; padding: 10px;',
+      'background: #222; color: #fff; font-size:8px; padding: 12px 10px;',
+      'background: #222; color: #777; font-size:8px; padding: 12px 10px;'
+    );
   }
+
+  /**
+   * Check if localStorage is available
+   * @returns {boolean}
+   * @private
+   */
+
+  #isLocalStorageAvailable() {
+    return typeof Storage !== 'undefined';
+  }
+
+  /**
+   * Parse URL parameters
+   * @returns {Object}
+   * @private
+   */
 
   #parseURLParams() {
     const urlParams = new URLSearchParams(window.location.search);
     const utms = {};
-    const arr = Object.values(this.domainUTMs);
-
-    arr.forEach((domainUTM) => {
-      if (urlParams.has(domainUTM.param)) {
-        utms[domainUTM.param] = urlParams.get(domainUTM.param);
+    this.domainUTMs.forEach(({ param }) => {
+      if (urlParams.has(param)) {
+        utms[param] = urlParams.get(param);
       }
     });
-
-    return Object.keys(utms).length !== 0 ? utms : false;
+    return Object.keys(utms).length > 0 ? utms : null;
   }
 
-  #saveParams(queryStrings) {
-    if (this.#isLocalStorageAvailable()) {
-      let utms = this.getStoredParams();
-      if (queryStrings) {
-        if (!utms) {
-          utms = {};
-        }
-        this.domainUTMs.forEach((domainUTM) => {
-          if (queryStrings[domainUTM.param]) {
-            utms[domainUTM.param] = {
-              class_name: domainUTM.class_name,
-              value: queryStrings[domainUTM.param]
-            };
-          }
-        });
-        localStorage.setItem('queryform_data', JSON.stringify(utms));
+  /**
+   * Store URL parameters in localStorage
+   * @param {Object} queryParams - URL parameters
+   * @returns {Object}
+   * @private
+   */
+
+  #storeParams(queryParams) {
+    if (!this.#isLocalStorageAvailable() || !queryParams) return;
+    const storedParams = this.getStoredParams() || {};
+    this.domainUTMs.forEach(({ param, class_name }) => {
+      if (queryParams[param]) {
+        storedParams[param] = {
+          class_name,
+          value: queryParams[param],
+        };
       }
-    }
+    });
+    localStorage.setItem('queryform_data', JSON.stringify(storedParams));
+    return storedParams;
   }
+
+  /**
+   * Get stored parameters from localStorage
+   * @returns {Object}
+   */
 
   getStoredParams() {
     if (this.#isLocalStorageAvailable()) {
-      let utms = JSON.parse(localStorage.getItem('queryform_data'));
-      if (utms !== null) {
-        return utms;
-      }
+      return JSON.parse(localStorage.getItem('queryform_data')) || {};
     }
     return {};
   }
 
-  #populateFormInputs(utms, domainUTMs) {
+  /**
+   * Populate form inputs with stored parameters
+   * @param {Object} storedParams - Stored parameters
+   * @param {Array} domainUTMs - Domain parameters
+   * @returns {void}
+   * @private
+   */
 
-    let formInputClasses = [];
-    let arrDomainUTMs = Object.values(domainUTMs);
+  #populateFormInputs(storedParams, domainUTMs) {
+    const inputSelectors = Object.values(storedParams).map(
+      ({ class_name }) => `.${class_name}`
+    );
+    const inputs = document.querySelectorAll(inputSelectors.join(','));
 
-    Object.keys(utms).forEach(function(key, index) {
-      formInputClasses.push('.' + utms[key].class_name);
-    });
-
-    const formInputs = document.querySelectorAll(formInputClasses);
-
-    formInputs.forEach((inputElement) => {
+    inputs.forEach((inputElement) => {
       const input = inputElement.tagName.toLowerCase() === 'input' ? inputElement : inputElement.querySelector('input');
       if (!input) return;
 
-      const classNames = inputElement.className.split(' ');
+      const inputClass = inputElement.className.split(' ').find(
+        className => inputSelectors.includes(`.${className}`)
+      );
 
-      classNames.forEach((className) => {
-        if (formInputClasses.includes('.' + className)) {
-          arrDomainUTMs.forEach((domainUTM) => {
-            if (className === domainUTM.class_name) {
-              input.value = utms[domainUTM.param].value;
-            }
-          });
+      if (inputClass) {
+        const matchingUTM = domainUTMs.find(({ class_name }) => class_name === inputClass);
+        if (matchingUTM) {
+          input.value = storedParams[matchingUTM.param]?.value || '';
         }
-      });
+      }
     });
-
   }
 
 }
 
 export default Queryform;
-
-// Optionally, add it to the window object
-// window.QueryForm = QueryForm;
