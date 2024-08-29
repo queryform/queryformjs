@@ -1,6 +1,6 @@
 # QueryformJS
 
-`QueryformJS` is a powerful JavaScript library designed to streamline the management of UTM parameters across your website forms. Whether you're fetching them from an API or handling them locally, this utility is invaluable for tracking campaign data and storing UTM parameters in local storage. It automatically populates form inputs with the corresponding values, providing a seamless way to capture attribution data directly within your forms.
+`QueryformJS` is a powerful JavaScript library designed to streamline the management of UTM parameters across your website forms. Whether you're fetching them from our API (Easy to use parameter tracking dashboard) or handling them locally in your code, this utility is invaluable for tracking campaign data and storing UTM parameters in local storage. It automatically populates form inputs with the corresponding values, providing a seamless way to capture attribution data directly within your forms.
 
 ## Use Case
 
