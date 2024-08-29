@@ -27,7 +27,7 @@ npm install @queryform/queryformjs
 ```
 
 ```bash
-yard add @queryform/queryformjs
+yarn add @queryform/queryformjs
 ```
 
 ## Usage
