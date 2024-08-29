@@ -1,6 +1,6 @@
 class Queryform {
 
-  constructor(websiteId = null, apiRoute = 'https://queryform.test/api/website/') {
+  constructor(websiteId = null, apiRoute = 'https://queryform.co/api/website/') {
     this.websiteId = websiteId;
     this.domainUTMs = [];
     this.apiRoute = apiRoute;

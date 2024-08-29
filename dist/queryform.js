@@ -6,7 +6,7 @@ var m = (o, t, a) => t.has(o) ? h("Cannot add the same private member more than 
 var r = (o, t, a) => (U(o, t, "access private method"), a);
 var s, p, g, y, w, c, b, S, x;
 class I {
-  constructor(t = null, a = "https://queryform.test/api/website/") {
+  constructor(t = null, a = "https://queryform.co/api/website/") {
     m(this, s);
     this.websiteId = t, this.domainUTMs = [], this.apiRoute = a;
   }
