@@ -4,10 +4,10 @@ var h = (o) => {
 var U = (o, t, a) => t.has(o) || h("Cannot " + a);
 var m = (o, t, a) => t.has(o) ? h("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(o) : t.set(o, a);
 var r = (o, t, a) => (U(o, t, "access private method"), a);
-var s, p, g, y, w, c, b, S, x;
+var e, p, g, y, w, c, b, S, x;
 class I {
   constructor(t = null, a = "https://queryform.co/api/website/") {
-    m(this, s);
+    m(this, e);
     this.websiteId = t, this.domainUTMs = [], this.apiRoute = a;
   }
   /**
@@ -25,17 +25,17 @@ class I {
    * queryform.init({ local: true }, [ { param: 'utm_source', class_name: 'qf_utm_source' } ]);
    */
   async init(t = { debug: !1, local: !1 }, a = []) {
-    r(this, s, w).call(this), t.local ? await r(this, s, g).call(this, a) : await r(this, s, p).call(this), await r(this, s, y).call(this);
+    t.debug && r(this, e, w).call(this), t.local ? await r(this, e, g).call(this, a) : await r(this, e, p).call(this), await r(this, e, y).call(this);
   }
   /**
    * Get stored parameters from localStorage
    * @returns {Object}
    */
   getStoredParams() {
-    return r(this, s, c).call(this) ? JSON.parse(localStorage.getItem("queryform_data")) || {} : {};
+    return r(this, e, c).call(this) ? JSON.parse(localStorage.getItem("queryform_data")) || {} : {};
   }
 }
-s = new WeakSet(), p = async function() {
+e = new WeakSet(), p = async function() {
   try {
     const t = await fetch(`${this.apiRoute}${this.websiteId}`);
     t.ok ? this.domainUTMs = await t.json() : console.warn("Failed to fetch domain parameters:", t.statusText);
@@ -47,7 +47,7 @@ s = new WeakSet(), p = async function() {
     console.warn("Invalid utms array:", t);
     return;
   }
-  if (t.some(({ param: a, class_name: e }) => !a || !e)) {
+  if (t.some(({ param: a, class_name: s }) => !a || !s)) {
     console.warn("Invalid utms array sub-items:", t);
     return;
   }
@@ -58,10 +58,10 @@ s = new WeakSet(), p = async function() {
  * @private
  */
 y = function() {
-  const t = r(this, s, b).call(this);
-  r(this, s, S).call(this, t);
+  const t = r(this, e, b).call(this);
+  r(this, e, S).call(this, t);
   const a = this.getStoredParams();
-  Object.keys(a).length > 0 && r(this, s, x).call(this, a, this.domainUTMs);
+  Object.keys(a).length > 0 && r(this, e, x).call(this, a, this.domainUTMs);
 }, /**
  * Log initialization message
  * @returns {void}
@@ -88,8 +88,8 @@ c = function() {
  */
 b = function() {
   const t = new URLSearchParams(window.location.search), a = {};
-  return this.domainUTMs.forEach(({ param: e }) => {
-    t.has(e) && (a[e] = t.get(e));
+  return this.domainUTMs.forEach(({ param: s }) => {
+    t.has(s) && (a[s] = t.get(s));
   }), Object.keys(a).length > 0 ? a : null;
 }, /**
  * Store URL parameters in localStorage
@@ -98,12 +98,12 @@ b = function() {
  * @private
  */
 S = function(t) {
-  if (!r(this, s, c).call(this) || !t) return;
+  if (!r(this, e, c).call(this) || !t) return;
   const a = this.getStoredParams() || {};
-  return this.domainUTMs.forEach(({ param: e, class_name: l }) => {
-    t[e] && (a[e] = {
+  return this.domainUTMs.forEach(({ param: s, class_name: l }) => {
+    t[s] && (a[s] = {
       class_name: l,
-      value: t[e]
+      value: t[s]
     });
   }), localStorage.setItem("queryform_data", JSON.stringify(a)), a;
 }, /**
@@ -114,19 +114,19 @@ S = function(t) {
  * @private
  */
 x = function(t, a) {
-  const e = Object.values(t).map(
+  const s = Object.values(t).map(
     ({ class_name: i }) => `.${i}`
   );
-  document.querySelectorAll(e.join(",")).forEach((i) => {
-    var d;
+  document.querySelectorAll(s.join(",")).forEach((i) => {
+    var f;
     const u = i.tagName.toLowerCase() === "input" ? i : i.querySelector("input");
     if (!u) return;
-    const f = i.className.split(" ").find(
-      (n) => e.includes(`.${n}`)
+    const d = i.className.split(" ").find(
+      (n) => s.includes(`.${n}`)
     );
-    if (f) {
-      const n = a.find(({ class_name: P }) => P === f);
-      n && (u.value = ((d = t[n.param]) == null ? void 0 : d.value) || "");
+    if (d) {
+      const n = a.find(({ class_name: P }) => P === d);
+      n && (u.value = ((f = t[n.param]) == null ? void 0 : f.value) || "");
     }
   });
 };
