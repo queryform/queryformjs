@@ -40,7 +40,7 @@ class Queryform {
    */
 
   async init(config = { debug: false, local: false }, utms = []) {
-    this.#logInitialization();
+    if(config.debug) this.#logInitialization();
     config.local ? await this.#fetchLocalParams(utms) : await this.#fetchDomainParams();
     await this.#configureQueryform();
   }
