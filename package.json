@@ -6,7 +6,8 @@
   "main": "dist/queryform.js",
   "scripts": {
     "dev": "vite",
-    "release": "vite build"
+    "build": "vite build",
+    "release": "npm version patch && npm publish"
   },
   "author": "",
   "license": "ISC",
