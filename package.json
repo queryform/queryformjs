@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "release": "npm version patch && npm publish"
+    "bump": "npm version patch"
   },
   "author": "",
   "license": "ISC",
