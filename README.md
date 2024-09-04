@@ -33,10 +33,10 @@ yarn add @queryform/queryformjs
 ## Usage
 
 ### Standard HTML Integration
-You can use `QueryformJS` in a standard HTML setup by including the script and initializing it when the page loads. Here’s an example:
+You can use `QueryformJS` in a standard HTML setup by including the script and initializing it when the page loads. Here’s an example pulling the latest release from unpkg:
 
 ```html
-<script src="https://queryform.test/queryform.js" defer type="module"></script>
+<script src="https://unpkg.com/@queryform/queryformjs@latest/dist/queryform.umd.js" defer></script>
 <script type="text/javascript" defer>
   window.addEventListener('load', function() {
     const qf = new Queryform('queryform-website-specific-api-key');
@@ -44,7 +44,7 @@ You can use `QueryformJS` in a standard HTML setup by including the script and i
   });
 </script>
 ```
-This approach is straightforward and can be used in any standard web environment where you want to quickly integrate QueryformJS.
+This approach is straightforward and can be used in any standard web environment where you want to quickly integrate QueryformJS. You may also download the latest code from github here: https://github.com/queryform/queryformjs
 
 ### Nuxt 3 Plugin Integration
 For Nuxt 3 users, you can easily integrate QueryformJS as a plugin. Here’s an example of how to set it up:
