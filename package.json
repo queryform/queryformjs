@@ -3,7 +3,9 @@
   "type": "module",
   "version": "0.0.96",
   "description": "Queryform allows users to easily track query string parameters, save them to local storage and automatically populate form fields on their website. It is a dependency free JS module that connects your website to the Queryform applications backend.",
-  "main": "dist/queryform.js",
+  "main": "dist/queryform.umd.js",
+  "module": "dist/queryform.es.js",
+  "unpkg": "dist/queryform.umd.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
