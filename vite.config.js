@@ -6,8 +6,8 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/queryform.js'),
       name: 'QueryForm',
-      fileName: (format) => `queryform.js`,
-      formats: ['es'],  // Use ES module format
+      fileName: (format) => `queryform.${format}.js`,
+      formats: ['es', 'umd'],  // Use ES module format
     },
     sourcemap: true,
   }

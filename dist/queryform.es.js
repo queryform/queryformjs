@@ -133,4 +133,4 @@ x = function(t, a) {
 export {
   I as default
 };
-//# sourceMappingURL=queryform.js.map
+//# sourceMappingURL=queryform.es.js.map
