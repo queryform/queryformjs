@@ -59,9 +59,14 @@ class Queryform {
       this.fetchLocalParams(utms)
     }else{
       const cacheUntil = this.getCacheUntil();
-      if(cacheUntil && new Date(cacheUntil) > new Date()){
+      // Convert cacheUntil to America/New_York timezone
+      const cacheUntilInNY = new Date(cacheUntil);
+      // Get the current time in America/New_York timezone
+      const currentDateTimeInNY = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      // Compare the two dates
+      if (cacheUntilInNY > currentDateTimeInNY) {
         this.logMessage(`Cache is still valid until ${cacheUntil}`);
-      }else{
+      } else {
         await this.fetchDomainParams();
       }
     }

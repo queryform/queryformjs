@@ -39,8 +39,8 @@ class f {
     if (this.debug = a.debug, this.local = a.local, this.local)
       this.fetchLocalParams(e);
     else {
-      const t = this.getCacheUntil();
-      t && new Date(t) > /* @__PURE__ */ new Date() ? this.logMessage(`Cache is still valid until ${t}`) : await this.fetchDomainParams();
+      const t = this.getCacheUntil(), r = new Date(t), s = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "America/New_York" }));
+      r > s ? this.logMessage(`Cache is still valid until ${t}`) : await this.fetchDomainParams();
     }
     this.configureQueryform();
   }
@@ -181,7 +181,7 @@ class f {
         (o) => t.includes(`.${o}`)
       );
       if (n) {
-        const o = e.find(({ class_name: u }) => u === n);
+        const o = e.find(({ class_name: c }) => c === n);
         o && (i.value = ((l = a[o.param]) == null ? void 0 : l.value) || "");
       }
     });
