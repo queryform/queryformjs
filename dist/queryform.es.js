@@ -12,9 +12,11 @@ class f {
       const a = await fetch(`${this.apiRoute}${this.websiteId}`);
       if (a.ok) {
         const e = await a.json();
-        this.domainUTMs = e.parameters, this.cacheUntil = e.cache_until;
-        const r = this.getSavedQueryformData().values || {};
-        this.saveQueryformData(e.parameters, r, e.cache_until);
+        this.domainUTMs = e.parameters;
+        const t = a.headers.get("X-Queryform-Cache-Until");
+        console.log("Cache Until:", t);
+        const s = this.getSavedQueryformData().values || {};
+        this.saveQueryformData(e.parameters, s, t);
       } else
         console.warn("Failed to fetch domain parameters:", a.statusText);
     } catch (a) {
@@ -40,7 +42,7 @@ class f {
       this.fetchLocalParams(e);
     else {
       const t = this.getCacheUntil(), r = new Date(t), s = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "America/New_York" }));
-      r > s ? this.logMessage(`Cache is still valid until ${t}`) : await this.fetchDomainParams();
+      t && r > s ? this.logMessage(`Cache is still valid until ${t}`) : await this.fetchDomainParams();
     }
     this.configureQueryform();
   }

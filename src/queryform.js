@@ -21,11 +21,12 @@ class Queryform {
       if (response.ok) {
         const resp = await response.json();
         this.domainUTMs = resp.parameters;
-        this.cacheUntil = resp.cache_until;
+        // get cache until from X-Queryform-Cache-Until header
+        const cacheUntil = response.headers.get('X-Queryform-Cache-Until');
         // get current queryform data
         const queryformData = this.getSavedQueryformData();
         const values = queryformData.values || {};
-        this.saveQueryformData(resp.parameters, values, resp.cache_until);
+        this.saveQueryformData(resp.parameters, values, cacheUntil);
 
       } else {
         console.warn('Failed to fetch domain parameters:', response.statusText);
@@ -64,7 +65,7 @@ class Queryform {
       // Get the current time in America/New_York timezone
       const currentDateTimeInNY = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
       // Compare the two dates
-      if (cacheUntilInNY > currentDateTimeInNY) {
+      if (cacheUntil && cacheUntilInNY > currentDateTimeInNY) {
         this.logMessage(`Cache is still valid until ${cacheUntil}`);
       } else {
         await this.fetchDomainParams();
