@@ -13,9 +13,7 @@ class f {
       if (a.ok) {
         const e = await a.json();
         this.domainUTMs = e.parameters;
-        const t = a.headers.get("X-Queryform-Cache-Until");
-        console.log("Cache Until:", t);
-        const s = this.getSavedQueryformData().values || {};
+        const t = a.headers.get("X-Queryform-Cache-Until"), s = this.getSavedQueryformData().values || {};
         this.saveQueryformData(e.parameters, s, t);
       } else
         console.warn("Failed to fetch domain parameters:", a.statusText);
