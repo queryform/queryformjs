@@ -1,0 +1,42 @@
+<!-- html boilerplate -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tests</title>
+    <script src="../dist/queryform.umd.js" defer></script>
+    <script type="text/javascript" defer>
+        window.addEventListener('load', function () {
+            // Queryform API
+            const qf = new QueryForm('9cf00322-cc73-4df0-98e4-92c36f54dcfe', 'https://queryform.test/api/website/');
+            qf.init({
+                debug: true
+            });
+
+            // Local Paramaters
+            // const qf = new QueryForm();
+            // qf.init({
+            //     debug: true,
+            //     local: true
+            // },[
+            //     { param: 'utm_campaign', class_name: 'qf_utm_campaign'},
+            //     { param: 'utm_source', class_name: 'qf_utm_source'},
+            //     { param: 'utm_medium', class_name: 'qf_utm_medium'},
+            //     { param: 'utm_term', class_name: 'qf_utm_term'},
+            //     { param: 'utm_content', class_name: 'qf_utm_content'}
+            // ]);
+        });
+    </script>
+</head>
+<body>
+    <h1>Queryform Testing</h1>
+    <form>
+        <input type="text" class="qf_utm_campaign" placeholder="qf_utm_campaign">
+        <input type="text" class="qf_utm_source" placeholder="qf_utm_source">
+        <input type="text" class="qf_utm_medium" placeholder="qf_utm_medium">
+        <input type="text" class="qf_utm_term" placeholder="qf_utm_term">
+        <input type="text" class="qf_utm_content" placeholder="qf_utm_content">
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>

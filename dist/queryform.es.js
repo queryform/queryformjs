@@ -1,14 +1,25 @@
-var h = (o) => {
-  throw TypeError(o);
-};
-var U = (o, t, a) => t.has(o) || h("Cannot " + a);
-var m = (o, t, a) => t.has(o) ? h("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(o) : t.set(o, a);
-var r = (o, t, a) => (U(o, t, "access private method"), a);
-var e, p, g, y, w, c, b, S, x;
-class I {
-  constructor(t = null, a = "https://queryform.co/api/website/") {
-    m(this, e);
-    this.websiteId = t, this.domainUTMs = [], this.apiRoute = a;
+class f {
+  constructor(a = null, e = "https://queryform.co/api/website/") {
+    this.websiteId = a, this.domainUTMs = [], this.apiRoute = e, this.debug = !1, this.local = !1, this.cacheUntil = null;
+  }
+  /**
+   * Fetch domain parameters from the API
+   * @returns {Promise<void>}
+   */
+  async fetchDomainParams() {
+    this.logMessage("Fetching parameters from queryform api.");
+    try {
+      const a = await fetch(`${this.apiRoute}${this.websiteId}`);
+      if (a.ok) {
+        const e = await a.json();
+        this.domainUTMs = e.parameters, this.cacheUntil = e.cache_until;
+        const r = this.getSavedQueryformData().values || {};
+        this.saveQueryformData(e.parameters, r, e.cache_until);
+      } else
+        console.warn("Failed to fetch domain parameters:", a.statusText);
+    } catch (a) {
+      console.warn("Error fetching domain parameters:", a);
+    }
   }
   /**
    * Initialize the Queryform
@@ -24,113 +35,159 @@ class I {
    * const queryform = new Queryform();
    * queryform.init({ local: true }, [ { param: 'utm_source', class_name: 'qf_utm_source' } ]);
    */
-  async init(t = { debug: !1, local: !1 }, a = []) {
-    t.debug && r(this, e, w).call(this), t.local ? await r(this, e, g).call(this, a) : await r(this, e, p).call(this), await r(this, e, y).call(this);
+  async init(a = { debug: !1, local: !1 }, e = []) {
+    if (this.debug = a.debug, this.local = a.local, this.local)
+      this.fetchLocalParams(e);
+    else {
+      const t = this.getCacheUntil();
+      t && new Date(t) > /* @__PURE__ */ new Date() ? this.logMessage(`Cache is still valid until ${t}`) : await this.fetchDomainParams();
+    }
+    this.configureQueryform();
+  }
+  /**
+   * Fetch local domain parameters
+   * @param {Array} utms - Local domain parameters
+   *
+   *
+   * @returns {void}
+   * @private
+   */
+  fetchLocalParams(a) {
+    if (!Array.isArray(a)) {
+      console.warn("Invalid utms array:", a);
+      return;
+    }
+    if (a.some(({ param: r, class_name: s }) => !r || !s)) {
+      console.warn("Invalid utms array sub-items:", a);
+      return;
+    }
+    const t = this.getSavedQueryformData().values || {};
+    this.saveQueryformData(a, t, null);
+  }
+  /**
+   * Configure the Queryform
+   * @returns {void}
+   * @private
+   */
+  configureQueryform() {
+    const a = this.parseURLParams();
+    this.storeParams(a);
+    const e = this.getSavedQueryformData(), t = e.params, r = e.values;
+    r && Object.keys(r).length > 0 && (this.logMessage("Populating form inputs."), this.populateFormInputs(r, t));
+  }
+  /**
+   * Log initialization message
+   * @returns {void}
+   * @private
+   */
+  logMessage(a) {
+    this.debug && console.log(
+      `%c Queryform%c v1.0%c ${a}`,
+      "background: #222; color: #2563eb; padding: 10px;",
+      "background: #222; color: #fff; font-size:8px; padding: 12px 10px;",
+      "background: #222; color: #777; font-size:8px; padding: 12px 10px;"
+    );
+  }
+  /**
+   * Check if localStorage is available
+   * @returns {boolean}
+   * @private
+   */
+  isLocalStorageAvailable() {
+    return typeof Storage < "u";
+  }
+  /**
+   * Parse URL parameters
+   * @returns {Object}
+   * @private
+   */
+  parseURLParams() {
+    const a = new URLSearchParams(window.location.search);
+    if (!a) return;
+    const e = {};
+    return this.getSavedQueryformData().params.forEach(({ param: r }) => {
+      a.has(r) && (e[r] = a.get(r), this.logMessage(`Valid URL parameter found [${r}].`));
+    }), Object.keys(e).length > 0 ? e : null;
+  }
+  /**
+   * Store URL parameters in localStorage
+   * @param {Object} queryParams - URL parameters
+   * @returns {Object}
+   * @private
+   */
+  storeParams(a) {
+    if (!this.isLocalStorageAvailable() || !a) return;
+    const e = this.getSavedQueryformData();
+    e.params.forEach(({ param: t, class_name: r }) => {
+      a[t] && (e.values[t] = {
+        class_name: r,
+        value: a[t]
+      });
+    }), this.saveQueryformData(e.params, e.values, e.cacheUntil);
   }
   /**
    * Get stored parameters from localStorage
    * @returns {Object}
    */
+  getStoredParamValues() {
+    return this.isLocalStorageAvailable() ? this.getSavedQueryformData().values : {};
+  }
+  /**
+   * Get stored parameters from localStorage
+   * @returns {Object}
+  */
   getStoredParams() {
-    return r(this, e, c).call(this) ? JSON.parse(localStorage.getItem("queryform_data")) || {} : {};
+    return this.isLocalStorageAvailable() ? this.getSavedQueryformData().params : {};
+  }
+  /**
+   * Get last fetched time
+   * @returns {string}
+   * @private
+   */
+  getCacheUntil() {
+    return this.getSavedQueryformData().cacheUntil;
+  }
+  /**
+   * Get stored parameters from localStorage
+   * @returns {Object}
+  */
+  getSavedQueryformData() {
+    return this.isLocalStorageAvailable() ? JSON.parse(localStorage.getItem("queryform")) || {} : {};
+  }
+  saveQueryformData(a, e, t) {
+    if (this.isLocalStorageAvailable())
+      return localStorage.setItem("queryform", JSON.stringify({
+        params: a,
+        values: e,
+        cacheUntil: t
+      })), this.getSavedQueryformData();
+  }
+  /**
+   * Populate form inputs with stored parameters
+   * @param {Object} storedParams - Stored parameters
+   * @param {Array} domainUTMs - Domain parameters
+   * @returns {void}
+   * @private
+   */
+  populateFormInputs(a, e) {
+    const t = Object.values(a).map(
+      ({ class_name: s }) => `.${s}`
+    );
+    document.querySelectorAll(t.join(",")).forEach((s) => {
+      var l;
+      const i = s.tagName.toLowerCase() === "input" ? s : s.querySelector("input");
+      if (!i) return;
+      const n = s.className.split(" ").find(
+        (o) => t.includes(`.${o}`)
+      );
+      if (n) {
+        const o = e.find(({ class_name: u }) => u === n);
+        o && (i.value = ((l = a[o.param]) == null ? void 0 : l.value) || "");
+      }
+    });
   }
 }
-e = new WeakSet(), p = async function() {
-  try {
-    const t = await fetch(`${this.apiRoute}${this.websiteId}`);
-    t.ok ? this.domainUTMs = await t.json() : console.warn("Failed to fetch domain parameters:", t.statusText);
-  } catch (t) {
-    console.warn("Error fetching domain parameters:", t);
-  }
-}, g = async function(t) {
-  if (!Array.isArray(t)) {
-    console.warn("Invalid utms array:", t);
-    return;
-  }
-  if (t.some(({ param: a, class_name: s }) => !a || !s)) {
-    console.warn("Invalid utms array sub-items:", t);
-    return;
-  }
-  this.domainUTMs = t;
-}, /**
- * Configure the Queryform
- * @returns {void}
- * @private
- */
-y = function() {
-  const t = r(this, e, b).call(this);
-  r(this, e, S).call(this, t);
-  const a = this.getStoredParams();
-  Object.keys(a).length > 0 && r(this, e, x).call(this, a, this.domainUTMs);
-}, /**
- * Log initialization message
- * @returns {void}
- * @private
- */
-w = function() {
-  console.log(
-    "%c Queryform%c v1.0%c Data synced.",
-    "background: #222; color: #2563eb; padding: 10px;",
-    "background: #222; color: #fff; font-size:8px; padding: 12px 10px;",
-    "background: #222; color: #777; font-size:8px; padding: 12px 10px;"
-  );
-}, /**
- * Check if localStorage is available
- * @returns {boolean}
- * @private
- */
-c = function() {
-  return typeof Storage < "u";
-}, /**
- * Parse URL parameters
- * @returns {Object}
- * @private
- */
-b = function() {
-  const t = new URLSearchParams(window.location.search), a = {};
-  return this.domainUTMs.forEach(({ param: s }) => {
-    t.has(s) && (a[s] = t.get(s));
-  }), Object.keys(a).length > 0 ? a : null;
-}, /**
- * Store URL parameters in localStorage
- * @param {Object} queryParams - URL parameters
- * @returns {Object}
- * @private
- */
-S = function(t) {
-  if (!r(this, e, c).call(this) || !t) return;
-  const a = this.getStoredParams() || {};
-  return this.domainUTMs.forEach(({ param: s, class_name: l }) => {
-    t[s] && (a[s] = {
-      class_name: l,
-      value: t[s]
-    });
-  }), localStorage.setItem("queryform_data", JSON.stringify(a)), a;
-}, /**
- * Populate form inputs with stored parameters
- * @param {Object} storedParams - Stored parameters
- * @param {Array} domainUTMs - Domain parameters
- * @returns {void}
- * @private
- */
-x = function(t, a) {
-  const s = Object.values(t).map(
-    ({ class_name: i }) => `.${i}`
-  );
-  document.querySelectorAll(s.join(",")).forEach((i) => {
-    var f;
-    const u = i.tagName.toLowerCase() === "input" ? i : i.querySelector("input");
-    if (!u) return;
-    const d = i.className.split(" ").find(
-      (n) => s.includes(`.${n}`)
-    );
-    if (d) {
-      const n = a.find(({ class_name: P }) => P === d);
-      n && (u.value = ((f = t[n.param]) == null ? void 0 : f.value) || "");
-    }
-  });
-};
 export {
-  I as default
+  f as default
 };
 //# sourceMappingURL=queryform.es.js.map

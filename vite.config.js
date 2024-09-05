@@ -10,5 +10,10 @@ export default defineConfig({
       formats: ['es', 'umd'],  // Use ES module format
     },
     sourcemap: true,
-  }
+  },
+  // add a server to render ./tests/index.html
+  server: {
+    open: '/tests/index.html',
+    port: 4173,
+  },
 });

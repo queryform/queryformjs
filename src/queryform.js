@@ -4,6 +4,9 @@ class Queryform {
     this.websiteId = websiteId;
     this.domainUTMs = [];
     this.apiRoute = apiRoute;
+    this.debug = false;
+    this.local = false;
+    this.cacheUntil = null;
   }
 
   /**
@@ -11,11 +14,19 @@ class Queryform {
    * @returns {Promise<void>}
    */
 
-  async #fetchDomainParams() {
+  async fetchDomainParams() {
+    this.logMessage('Fetching parameters from queryform api.');
     try {
       const response = await fetch(`${this.apiRoute}${this.websiteId}`);
       if (response.ok) {
-        this.domainUTMs = await response.json();
+        const resp = await response.json();
+        this.domainUTMs = resp.parameters;
+        this.cacheUntil = resp.cache_until;
+        // get current queryform data
+        const queryformData = this.getSavedQueryformData();
+        const values = queryformData.values || {};
+        this.saveQueryformData(resp.parameters, values, resp.cache_until);
+
       } else {
         console.warn('Failed to fetch domain parameters:', response.statusText);
       }
@@ -40,19 +51,33 @@ class Queryform {
    */
 
   async init(config = { debug: false, local: false }, utms = []) {
-    if(config.debug) this.#logInitialization();
-    config.local ? await this.#fetchLocalParams(utms) : await this.#fetchDomainParams();
-    await this.#configureQueryform();
+
+    this.debug = config.debug;
+    this.local = config.local;
+
+    if (this.local){
+      this.fetchLocalParams(utms)
+    }else{
+      const cacheUntil = this.getCacheUntil();
+      if(cacheUntil && new Date(cacheUntil) > new Date()){
+        this.logMessage(`Cache is still valid until ${cacheUntil}`);
+      }else{
+        await this.fetchDomainParams();
+      }
+    }
+    this.configureQueryform();
   }
 
   /**
    * Fetch local domain parameters
    * @param {Array} utms - Local domain parameters
+   *
+   *
    * @returns {void}
    * @private
    */
 
-  async #fetchLocalParams(utms) {
+  fetchLocalParams(utms) {
     // validate the format of the utms array
     if (!Array.isArray(utms)) {
       console.warn('Invalid utms array:', utms);
@@ -64,7 +89,9 @@ class Queryform {
       return;
     }
     // store the utms array
-    this.domainUTMs = utms;
+    const queryformData = this.getSavedQueryformData();
+    const values = queryformData.values || {};
+    this.saveQueryformData(utms, values, null);
   }
 
   /**
@@ -73,16 +100,19 @@ class Queryform {
    * @private
    */
 
-  #configureQueryform() {
+  configureQueryform() {
     // Check if domainUTMs is empty
-    const queryParams = this.#parseURLParams();
-    // Store the query params
-    this.#storeParams(queryParams);
-    // Get the stored params
-    const storedParams = this.getStoredParams();
-    // Populate the form inputs
-    if (Object.keys(storedParams).length > 0) {
-      this.#populateFormInputs(storedParams, this.domainUTMs);
+    const queryParams = this.parseURLParams();
+
+    this.storeParams(queryParams);
+
+    const queryformData = this.getSavedQueryformData();
+    const domainUTMs = queryformData.params;
+    const storedParams = queryformData.values;
+
+    if (storedParams && Object.keys(storedParams).length > 0) {
+      this.logMessage('Populating form inputs.');
+      this.populateFormInputs(storedParams, domainUTMs);
     }
   }
 
@@ -92,10 +122,10 @@ class Queryform {
    * @private
    */
 
-  #logInitialization() {
-    // Branded console log message
+  logMessage(msg) {
+    if(!this.debug) return;
     console.log(
-      `%c Queryform` + `%c v1.0` + `%c Data synced.`,
+      `%c Queryform` + `%c v1.0` + `%c ${msg}`,
       'background: #222; color: #2563eb; padding: 10px;',
       'background: #222; color: #fff; font-size:8px; padding: 12px 10px;',
       'background: #222; color: #777; font-size:8px; padding: 12px 10px;'
@@ -108,7 +138,7 @@ class Queryform {
    * @private
    */
 
-  #isLocalStorageAvailable() {
+  isLocalStorageAvailable() {
     return typeof Storage !== 'undefined';
   }
 
@@ -118,12 +148,15 @@ class Queryform {
    * @private
    */
 
-  #parseURLParams() {
+  parseURLParams() {
     const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams) return;
     const utms = {};
-    this.domainUTMs.forEach(({ param }) => {
+    const queryformData = this.getSavedQueryformData();
+    queryformData.params.forEach(({ param }) => {
       if (urlParams.has(param)) {
         utms[param] = urlParams.get(param);
+        this.logMessage(`Valid URL parameter found [${param}].`);
       }
     });
     return Object.keys(utms).length > 0 ? utms : null;
@@ -136,19 +169,18 @@ class Queryform {
    * @private
    */
 
-  #storeParams(queryParams) {
-    if (!this.#isLocalStorageAvailable() || !queryParams) return;
-    const storedParams = this.getStoredParams() || {};
-    this.domainUTMs.forEach(({ param, class_name }) => {
+  storeParams(queryParams) {
+    if (!this.isLocalStorageAvailable() || !queryParams) return;
+    const queryformData = this.getSavedQueryformData();
+    queryformData.params.forEach(({ param, class_name }) => {
       if (queryParams[param]) {
-        storedParams[param] = {
+        queryformData.values[param] = {
           class_name,
           value: queryParams[param],
         };
       }
     });
-    localStorage.setItem('queryform_data', JSON.stringify(storedParams));
-    return storedParams;
+    this.saveQueryformData(queryformData.params, queryformData.values, queryformData.cacheUntil);
   }
 
   /**
@@ -156,11 +188,59 @@ class Queryform {
    * @returns {Object}
    */
 
-  getStoredParams() {
-    if (this.#isLocalStorageAvailable()) {
-      return JSON.parse(localStorage.getItem('queryform_data')) || {};
+  getStoredParamValues() {
+    if (this.isLocalStorageAvailable()) {
+      const queryformData = this.getSavedQueryformData();
+      return queryformData.values;
     }
     return {};
+  }
+
+  /**
+   * Get stored parameters from localStorage
+   * @returns {Object}
+  */
+
+  getStoredParams() {
+    if (this.isLocalStorageAvailable()) {
+      const queryformData = this.getSavedQueryformData();
+      return queryformData.params;
+    }
+    return {};
+  }
+
+  /**
+   * Get last fetched time
+   * @returns {string}
+   * @private
+   */
+
+  getCacheUntil() {
+    const queryformData = this.getSavedQueryformData();
+    return queryformData.cacheUntil;
+  }
+
+  /**
+   * Get stored parameters from localStorage
+   * @returns {Object}
+  */
+
+  getSavedQueryformData() {
+    if (this.isLocalStorageAvailable()) {
+      return JSON.parse(localStorage.getItem('queryform')) || {};
+    }
+    return {};
+  }
+
+  saveQueryformData(params, values, cacheUntil) {
+    if (this.isLocalStorageAvailable()) {
+      localStorage.setItem('queryform', JSON.stringify({
+        params,
+        values,
+        cacheUntil,
+      }));
+      return this.getSavedQueryformData();
+    }
   }
 
   /**
@@ -171,7 +251,7 @@ class Queryform {
    * @private
    */
 
-  #populateFormInputs(storedParams, domainUTMs) {
+  populateFormInputs(storedParams, domainUTMs) {
     const inputSelectors = Object.values(storedParams).map(
       ({ class_name }) => `.${class_name}`
     );
