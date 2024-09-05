@@ -50,7 +50,7 @@ This approach is straightforward and can be used in any standard web environment
 For Nuxt 3 users, you can easily integrate QueryformJS as a plugin. Here’s an example of how to set it up:
 
 ```js
-import Queryform from '@queryform/queryformjs';
+import Queryform from '@queryform/queryformjs/dist/queryform.es.js';
 
 export default defineNuxtPlugin(() => {
   const nuxtApp = useNuxtApp();
@@ -77,7 +77,7 @@ In a Next.js project, you can integrate QueryformJS by using it in a custom hook
 
 ```js
 import { useEffect } from 'react';
-import Queryform from '@queryform/queryformjs';
+import Queryform from '@queryform/queryformjs/dist/queryform.es.js';
 
 const useQueryform = () => {
   useEffect(() => {
