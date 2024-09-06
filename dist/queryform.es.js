@@ -82,9 +82,8 @@ class f {
    */
   logMessage(a) {
     this.debug && console.log(
-      `%c Queryform%c v1.0%c ${a}`,
+      `%c Queryform%c ${a}`,
       "background: #222; color: #2563eb; padding: 10px;",
-      "background: #222; color: #fff; font-size:8px; padding: 12px 10px;",
       "background: #222; color: #777; font-size:8px; padding: 12px 10px;"
     );
   }
