@@ -39,8 +39,18 @@ You can use `QueryformJS` in a standard HTML setup by including the script and i
 <script src="https://unpkg.com/@queryform/queryformjs@latest/dist/queryform.umd.js" defer></script>
 <script type="text/javascript" defer>
   window.addEventListener('load', function() {
-    const qf = new Queryform('queryform-website-specific-api-key');
-    qf.init();
+
+    // API Driven
+    const queryform = new Queryform('queryform-website-specific-api-key');
+    queryform.init();
+
+    // Local Driven
+    // const queryform = new Queryform();
+    // queryform.init({ debug: false, local: true }, [
+    //     { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
+    //     { param: 'utm_medium', class_name: 'qf_utm_medium' }
+    // ]);
+
   });
 </script>
 ```
