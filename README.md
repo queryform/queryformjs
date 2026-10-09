@@ -10,8 +10,6 @@ Use local configuration without an account or API. Use a QueryForm website ID wh
 npm install @queryform/queryformjs
 ```
 
-The repository prepares version **0.1.5**. GitHub updates do not publish a new npm version; check the registry version before relying on the new API. To use this checkout directly, run `npm ci && npm run build` and serve the generated files from `dist/`.
-
 ## Local configuration
 
 ```html
