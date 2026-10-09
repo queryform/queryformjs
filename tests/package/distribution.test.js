@@ -7,9 +7,9 @@ import QueryForm from '@queryform/queryformjs';
 const require = createRequire(import.meta.url);
 
 test('ESM and CommonJS package exports initialize without a browser', async () => {
-  assert.equal(await new QueryForm().init(), false);
+  assert.equal(await new QueryForm().init(), undefined);
   const CommonQueryForm = require('@queryform/queryformjs');
-  assert.equal(await new CommonQueryForm().init(), false);
+  assert.equal(await new CommonQueryForm().init(), undefined);
 });
 
 test('browser distribution fills submitted fields and preserves public getters', async () => {

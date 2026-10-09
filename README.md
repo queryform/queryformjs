@@ -10,7 +10,7 @@ Use local configuration without an account or API. Use a QueryForm website ID wh
 npm install @queryform/queryformjs
 ```
 
-The repository prepares version **0.2.0**. GitHub updates do not publish a new npm version; check the registry version before relying on the new API. To use this checkout directly, run `npm ci && npm run build` and serve the generated files from `dist/`.
+The repository prepares version **0.1.5**. GitHub updates do not publish a new npm version; check the registry version before relying on the new API. To use this checkout directly, run `npm ci && npm run build` and serve the generated files from `dist/`.
 
 ## Local configuration
 
@@ -38,7 +38,7 @@ For a bundler or an ES module:
 import QueryForm from '@queryform/queryformjs';
 
 const qf = new QueryForm();
-const ready = await qf.init({ local: true }, [
+await qf.init({ local: true }, [
   { param: 'utm_source', class_name: 'qf_utm_source' }
 ]);
 ```
@@ -49,7 +49,7 @@ CommonJS uses `const QueryForm = require('@queryform/queryformjs')`. TypeScript 
 
 ```js
 const qf = new QueryForm('your-public-website-id');
-const ready = await qf.init({ debug: true });
+await qf.init({ debug: true });
 ```
 
 For self-hosting, pass the API prefix as the second constructor argument:
@@ -59,42 +59,57 @@ const qf = new QueryForm('website-id', 'https://your-service.example/api/website
 await qf.init();
 ```
 
-The API must return `{ "parameters": [{ "param": "utm_source", "class_name": "qf_utm_source" }] }`; an array response is also accepted. The hosted API checks the registered hostname and subscription. The website ID is public, not a credential. Network failures return `false`; `debug: true` logs diagnostic information.
+The API must return `{ "parameters": [{ "param": "utm_source", "class_name": "qf_utm_source" }] }`; an array response is also accepted. The hosted API checks the registered hostname and subscription. The website ID is public, not a credential. Network failures retain saved configuration when available. `init()` still resolves without a return value; inspect `qf.ready` after awaiting initialization. `debug: true` logs diagnostic information.
 
 ## Public API
 
 | Method | Behavior |
 | --- | --- |
-| `init(options?, mappings?)` | Resolves to `true` on success or `false` on failure. Options are `local` and `debug`, both false by default. Concurrent calls on one instance share its first initialization. |
-| `refresh()` | Captures the current URL and populates available form controls. Call after SPA navigation or inserting a form asynchronously. |
-| `getStoredParams()` | Returns configured `{ param, class_name }` mappings, retaining the 0.1.x getter shape. |
-| `getStoredParamValues()` | Returns captured values keyed by parameter name, each with `class_name` and `value`. |
-| `getSavedQueryformData()` | Compatibility snapshot containing `params`, `values`, and `cacheUntil: null`. |
-| `getCacheUntil()` | Returns `null`; version 0.2 no longer caches remote configuration in the browser. |
-| `clear()` | Clears this instance's attribution from memory and its storage key. Existing field values are not erased. |
+| `init(options?, mappings?)` | Preserves `Promise<void>`. `local` and `debug` default to false. Concurrent calls share the first initialization. `ready` indicates usable configuration after completion. |
+| `refresh()` | Captures the URL and populates fields after SPA navigation or form insertion. |
+| `getStoredParams()` | Reads stored mappings, including before initialization. Undefined when none exist. |
+| `getStoredParamValues()` | Reads captured `{ class_name, value }` records. Undefined when none exist. |
+| `getSavedQueryformData()` | Reads the legacy `{ params, values, cacheUntil }` snapshot. |
+| `getCacheUntil()` | Reads the original API cache header; undefined before configuration. |
+| `clear()` | Clears attribution while retaining configuration; existing field values are not erased. |
 
-Imports are safe during server-side rendering; initialize on the client. In Vue, use `onMounted`; in React, initialize after the form mounts. For dynamically rendered forms, call `refresh()` once the controls exist. QueryForm emits bubbling `input` and `change` events only when a value changes; controlled framework inputs may require your application's state integration.
+All 0.1.4 prototype methods remain available, including `fetchDomainParams`, `fetchLocalParams`, `configureQueryform`, `parseURLParams`, `storeParams`, `saveQueryformData`, `populateFormInputs`, `isLocalStorageAvailable`, and `logMessage`. Prefer `init` and `refresh` for new integrations.
 
-## Storage and field behavior
+## Compatible defaults and optional enhancements
 
-- Only configured query parameters are retained. The first value wins if a URL repeats a parameter. A present empty value clears prior attribution for that parameter.
-- Values are stored under `queryform_data:<websiteId>`, or `queryform_data:local` in local mode without an ID. Pass a distinct ID with local mode to isolate multiple configurations on one origin.
-- Persistence has no automatic expiration. Denied storage, quota errors, and corrupted JSON fall back to memory for the current instance.
-- A configured class may be on an input, textarea, select, or wrapper. All supported controls inside a wrapper receive the value. Password, file, checkbox, radio, and button inputs are excluded.
-- Class names are treated literally. Configuration must provide a nonempty parameter name and a single nonempty class token.
-- Initialization waits for DOM readiness. There is no automatic DOM observer, polling, or SPA router hook.
-- Initialize only after consent when required by your application. On withdrawal, call `clear()` and stop invoking capture methods. `refresh()` will capture the current URL again.
+Version 0.1.5 retains the published 0.1.4 defaults:
 
-## Migrating from 0.1.x
+- The existing `queryform` localStorage snapshot is read and written directly. Returning visitors keep attribution, and older scripts on another page can still read new captures. No migration is required.
+- Remote configuration respects `X-Queryform-Cache-Until` and falls back to saved mappings after a failed fetch. Servers should supply an ISO 8601 timestamp with timezone. An absent or invalid expiry causes a new fetch.
+- Empty URL values leave existing attribution unchanged; `0` remains a valid string value.
+- Field assignment is silent and wrapper classes target the first descendant input. Existing inputs are populated synchronously in local mode. Initialization also catches forms parsed later at DOM readiness.
+- Browser global `QueryForm`, ESM default imports, and existing distribution paths remain available. CommonJS now has a proper `.cjs` entry point.
 
-Version 0.2 changes storage and initialization behavior. Review these changes before deploying:
+New behavior is opt-in:
 
-1. Shared `queryform` and `queryform_data` storage is not imported. Scoped storage prevents one website's configuration from affecting another, but starts a new attribution history. Old keys remain until your application explicitly removes them.
-2. Remote configuration is fetched on each sequential `init()` call. Previous browser caching mixed configurations and depended on ambiguous timezone strings. This can increase API request counts; prefer `refresh()` for SPA navigation after initial configuration.
-3. `init()` now resolves to a boolean. Invalid mappings and failed requests return `false`; diagnostics are enabled with `debug: true`.
-4. `getStoredParams()` still returns mappings and `getStoredParamValues()` still returns captured values. Cache getters return `null`. Internal 0.1.x helpers are no longer supported public entry points.
-5. Empty URL values replace old values. Field updates now notify listeners, and wrappers populate every supported descendant.
-6. The package entry point supports CommonJS via `.cjs` while retaining `dist/queryform.umd.js` for browser scripts and `dist/queryform.es.js` for existing ESM imports.
+```js
+await qf.init({
+  local: true,
+  emitEvents: true,       // bubbling input/change events when values change
+  clearEmptyValues: true,
+  expandedFields: true, // inputs, textareas and selects; all wrapper descendants
+  scopedStorage: true   // separate history under queryform_data:<websiteId or local>
+}, mappings);
+```
+
+Shared storage is retained for compatibility, so multiple configurations on the same origin still share attribution and configuration. Use `scopedStorage` consistently across pages for new isolated integrations, with a distinct website ID for each configuration. It intentionally does not guess ownership or import the shared legacy history. The earlier unreleased 0.2.0 draft is superseded by this compatible release.
+
+## Robustness and boundaries
+
+Storage denial, quota errors, and malformed data fall back to memory. API payloads are validated, array responses are accepted, prototype-like parameter names are handled safely, and class names are treated literally. Mappings require string parameter names and single class tokens. File inputs are skipped because browsers prohibit assigning file paths. These fixes intentionally do not preserve crashes or unsafe malformed-input behavior.
+
+Imports are safe during server-side rendering; initialize on the client. There is no automatic DOM observer or router hook; call `refresh()` after dynamic forms mount. Optional events may still require application-specific integration with controlled framework inputs.
+
+Attribution has no automatic expiry. Initialize only after consent when required. On withdrawal, call `clear()` and stop capture calls; `refresh()` captures again. Shared legacy caching is not an authorization boundary, and stale configuration can remain usable offline, as in 0.1.4.
+
+## Upgrade verification
+
+Tests compare the actual published 0.1.4 distribution with the new implementation for returning visitors, campaign replacement, empty and zero values, remote caching, offline fallback, silent field updates, wrapper behavior, storage shape, getters, and initialization return values. They also verify all legacy prototype methods remain callable. This provides concrete compatibility evidence, not a guarantee for every undocumented integration.
 
 ## Development
 
@@ -116,4 +131,4 @@ Before publishing a package, run the checks above and `npm pack --dry-run`. The 
 
 Open a focused issue with a reproduction and expected behavior. Include regression tests with bug fixes. Avoid posting sensitive visitor data or credentials in examples.
 
-The package manifest declares ISC. This update preserves that declaration and corrects the old README's conflicting MIT claim. A full license file and confirmed copyright attribution still need to be supplied by the project owner before a package release.
+The package manifest declares ISC. This update preserves that declaration and corrects the old README's conflicting MIT claim. A full license file and confirmed copyright attribution remain documentation follow-ups.

@@ -1,111 +1,180 @@
 //#region src/queryform.js
-var e = class {
+var e = (e, t) => Object.prototype.hasOwnProperty.call(e, t), t = (e) => Array.isArray(e) && e.every((e) => e && typeof e.param == "string" && e.param.length > 0 && typeof e.class_name == "string" && e.class_name.length > 0 && !/\s/.test(e.class_name)), n = (e) => Object.fromEntries(Object.entries(e || {}).filter(([, e]) => e && typeof e.value == "string" && typeof e.class_name == "string").map(([e, t]) => [e, {
+	class_name: t.class_name,
+	value: t.value
+}])), r = class {
 	constructor(e = null, t = "https://queryform.co/api/website/") {
-		this.websiteId = e, this.apiRoute = t, this.domainUTMs = [], this.storageKey = `queryform_data:${e || "local"}`, this.values = {}, this.storageFailed = !1, this.pending = null;
+		this.websiteId = e, this.apiRoute = t, this.domainUTMs = [], this.debug = !1, this.local = !1, this.cacheUntil = null, this.storageKey = "queryform", this.values = {}, this.snapshot = {}, this.storageFailed = !1, this.pending = null, this.ready = !1, this.options = {};
 	}
 	async init(e = {}, t = []) {
-		if (typeof window > "u" || typeof document > "u") return !1;
+		if (typeof window > "u" || typeof document > "u") return;
 		if (this.pending) return this.pending;
-		this.pending = this.initialize(e, t);
+		this.options = e || {}, this.debug = !!this.options.debug, this.local = !!this.options.local;
+		let n = this.options.scopedStorage ? `queryform_data:${this.websiteId || "local"}` : "queryform";
+		n !== this.storageKey && (this.storageKey = n, this.snapshot = {}, this.storageFailed = !1), this.ready = !1, this.pending = this.initialize(t);
 		try {
-			return await this.pending;
+			await this.pending;
 		} finally {
 			this.pending = null;
 		}
 	}
-	async initialize(e, t) {
+	async initialize(e) {
 		try {
-			let n = t;
-			if (!e.local) {
-				if (!this.websiteId) throw Error("A website ID is required for remote configuration.");
-				let e = new AbortController(), t = setTimeout(() => e.abort(), 1e4);
-				try {
-					let t = await fetch(`${this.apiRoute}${encodeURIComponent(this.websiteId)}`, {
-						signal: e.signal,
-						credentials: "omit",
-						headers: { Accept: "application/json" }
-					});
-					if (!t.ok) throw Error(`Configuration request failed (${t.status}).`);
-					let r = await t.json();
-					n = Array.isArray(r) ? r : r?.parameters;
-				} finally {
-					clearTimeout(t);
-				}
+			if (this.local) {
+				if (!t(e)) throw Error("Expected { param, class_name } mappings.");
+				this.fetchLocalParams(e);
+			} else {
+				let e = this.getSavedQueryformData(), n = Date.parse(e.cacheUntil);
+				(!t(e.params) || !(n > Date.now())) && await this.fetchDomainParams();
 			}
-			if (!Array.isArray(n) || n.some((e) => !e || typeof e.param != "string" || !e.param || typeof e.class_name != "string" || !e.class_name || /\s/.test(e.class_name))) throw Error("Expected an array of { param, class_name } mappings.");
-			return this.domainUTMs = n, this.values = this.getStoredParamValues(), this.capture(), document.readyState === "loading" && await new Promise((e) => document.addEventListener("DOMContentLoaded", e, { once: !0 })), this.populate(), e.debug && console.info("QueryForm: parameters synced."), !0;
-		} catch (t) {
-			return this.domainUTMs = [], e.debug && console.warn("QueryForm:", t), !1;
+			if (!t(this.getSavedQueryformData().params)) return;
+			this.configureQueryform(), document.readyState === "loading" && (await new Promise((e) => document.addEventListener("DOMContentLoaded", e, { once: !0 })), this.configureQueryform()), this.ready = !0;
+		} catch (e) {
+			this.logMessage(e);
 		}
 	}
-	getStoredParamValues() {
-		let e = this.values;
+	async fetchDomainParams() {
+		let e;
 		try {
-			let t = this.storageFailed ? null : window.localStorage.getItem(this.storageKey);
-			t !== null && (e = JSON.parse(t));
-		} catch {}
-		return Object.fromEntries(this.domainUTMs.flatMap(({ param: t, class_name: n }) => {
-			let r = e && Object.hasOwn(e, t) ? e[t] : null;
-			return r && typeof r.value == "string" ? [[t, {
-				class_name: n,
-				value: r.value
-			}]] : [];
-		}));
+			if (!this.websiteId) throw Error("A website ID is required.");
+			let n = typeof AbortController > "u" ? null : new AbortController();
+			n && (e = setTimeout(() => n.abort(), 1e4));
+			let r = await fetch(`${this.apiRoute}${encodeURIComponent(this.websiteId)}`, {
+				...n ? { signal: n.signal } : {},
+				headers: { Accept: "application/json" }
+			});
+			if (!r.ok) throw Error(`Configuration request failed (${r.status}).`);
+			let i = await r.json(), a = Array.isArray(i) ? i : i?.parameters;
+			if (!t(a)) throw Error("Invalid configuration response.");
+			this.saveQueryformData(a, this.getStoredParamValues() || {}, r.headers?.get("X-Queryform-Cache-Until") || null);
+		} catch (e) {
+			this.logMessage(e);
+		} finally {
+			clearTimeout(e);
+		}
 	}
-	getStoredParams() {
-		return this.domainUTMs.map((e) => ({ ...e }));
+	fetchLocalParams(e) {
+		t(e) ? this.saveQueryformData(e, this.getStoredParamValues() || {}, null) : this.logMessage("Invalid local mappings.");
 	}
 	getSavedQueryformData() {
-		return {
-			params: this.getStoredParams(),
-			values: this.getStoredParamValues(),
-			cacheUntil: null
-		};
+		if (!this.storageFailed) try {
+			let e = window.localStorage.getItem(this.storageKey);
+			if (e !== null) {
+				let r = JSON.parse(e);
+				r && t(r.params) && (this.snapshot = {
+					params: r.params.map((e) => ({ ...e })),
+					values: n(r.values),
+					cacheUntil: typeof r.cacheUntil == "string" ? r.cacheUntil : null
+				});
+			} else this.snapshot = {};
+		} catch {}
+		return this.snapshot;
+	}
+	getStoredParams() {
+		return this.getSavedQueryformData().params;
+	}
+	getStoredParamValues() {
+		return this.getSavedQueryformData().values;
 	}
 	getCacheUntil() {
-		return null;
+		return this.getSavedQueryformData().cacheUntil;
 	}
-	capture() {
-		let e = new URLSearchParams(window.location.search);
-		for (let { param: t, class_name: n } of this.domainUTMs) e.has(t) && Object.defineProperty(this.values, t, {
+	saveQueryformData(e, r, i) {
+		if (!t(e)) return this.getSavedQueryformData();
+		this.domainUTMs = e.map((e) => ({ ...e })), this.values = n(r), this.cacheUntil = typeof i == "string" ? i : null, this.snapshot = {
+			params: this.domainUTMs,
+			values: this.values,
+			cacheUntil: this.cacheUntil
+		};
+		try {
+			window.localStorage.setItem(this.storageKey, JSON.stringify(this.snapshot));
+		} catch {
+			this.storageFailed = !0;
+		}
+		return this.snapshot;
+	}
+	isLocalStorageAvailable() {
+		try {
+			return typeof window < "u" && !!window.localStorage;
+		} catch {
+			return !1;
+		}
+	}
+	logMessage(e) {
+		this.debug && console.info("QueryForm:", e);
+	}
+	parseURLParams() {
+		if (typeof window > "u") return null;
+		let e = new URLSearchParams(window.location.search), t = Object.fromEntries((this.getStoredParams() || []).filter(({ param: t }) => e.has(t)).map(({ param: t }) => [t, e.get(t)]));
+		return Object.keys(t).length ? t : null;
+	}
+	storeParams(t) {
+		if (!t) return;
+		let r = this.getSavedQueryformData(), i = n(r.values);
+		for (let { param: n, class_name: a } of r.params || []) e(t, n) && typeof t[n] == "string" && (t[n] || this.options.clearEmptyValues) && Object.defineProperty(i, n, {
 			value: {
-				class_name: n,
-				value: e.get(t)
+				class_name: a,
+				value: t[n]
 			},
 			enumerable: !0,
 			configurable: !0,
 			writable: !0
 		});
+		this.saveQueryformData(r.params || [], i, r.cacheUntil);
+	}
+	configureQueryform() {
+		this.storeParams(this.parseURLParams());
+		let e = this.getSavedQueryformData();
+		this.domainUTMs = e.params || [], this.values = e.values || {}, this.populateFormInputs(this.values, this.domainUTMs);
+	}
+	populateFormInputs(n, r) {
+		if (typeof document > "u" || !t(r)) return;
+		let i = /* @__PURE__ */ new Set();
+		for (let { param: t, class_name: a } of r) {
+			if (!n || !e(n, t) || typeof n[t]?.value != "string") continue;
+			let r = /* @__PURE__ */ new Set();
+			for (let e of Array.from(document.getElementsByClassName(a))) if (this.options.expandedFields) {
+				if (e.matches("input, textarea, select")) r.add(e);
+				else for (let t of e.querySelectorAll("input, textarea, select")) r.add(t);
+			} else {
+				if (i.has(e) || Array.from(e.classList).find((e) => Object.values(n).some((t) => t.class_name === e)) !== a) continue;
+				i.add(e);
+				let t = e.tagName.toLowerCase() === "input" ? e : e.querySelector("input");
+				t && r.add(t);
+			}
+			for (let e of r) {
+				if (e.matches("input[type=\"file\"]") || this.options.expandedFields && e.matches("input[type=\"password\"], input[type=\"checkbox\"], input[type=\"radio\"], input[type=\"submit\"], input[type=\"button\"], input[type=\"reset\"]")) continue;
+				let r = n[t].value;
+				if (e.value !== r && (e.value = r, this.options.emitEvents)) {
+					let t = e.ownerDocument.defaultView.Event;
+					e.dispatchEvent(new t("input", { bubbles: !0 })), e.dispatchEvent(new t("change", { bubbles: !0 }));
+				}
+			}
+		}
+	}
+	refresh() {
+		typeof window < "u" && this.configureQueryform();
+	}
+	capture() {
+		this.storeParams(this.parseURLParams());
+	}
+	populate() {
+		this.populateFormInputs(this.getStoredParamValues(), this.getStoredParams() || []);
+	}
+	clear() {
+		this.values = {}, this.snapshot = {
+			params: this.domainUTMs,
+			values: {},
+			cacheUntil: this.cacheUntil
+		};
 		try {
-			window.localStorage.setItem(this.storageKey, JSON.stringify(this.values));
+			window.localStorage.setItem(this.storageKey, JSON.stringify(this.snapshot));
 		} catch {
 			this.storageFailed = !0;
 		}
 	}
-	refresh() {
-		typeof document < "u" && typeof window < "u" && (this.values = this.getStoredParamValues(), this.capture(), this.populate());
-	}
-	populate() {
-		for (let { param: e, class_name: t } of this.domainUTMs) {
-			if (!Object.hasOwn(this.values, e)) continue;
-			let n = /* @__PURE__ */ new Set();
-			for (let e of Array.from(document.getElementsByClassName(t))) if (e.matches("input, textarea, select")) n.add(e);
-			else for (let t of e.querySelectorAll("input, textarea, select")) n.add(t);
-			for (let t of n) {
-				if (t.matches("input[type=\"file\"], input[type=\"password\"], input[type=\"checkbox\"], input[type=\"radio\"], input[type=\"submit\"], input[type=\"button\"], input[type=\"reset\"]")) continue;
-				let n = this.values[e].value;
-				t.value !== n && (t.value = n, t.dispatchEvent(new Event("input", { bubbles: !0 })), t.dispatchEvent(new Event("change", { bubbles: !0 })));
-			}
-		}
-	}
-	clear() {
-		this.values = {}, this.storageFailed = !0;
-		try {
-			window.localStorage.removeItem(this.storageKey);
-		} catch {}
-	}
 };
 //#endregion
-export { e as default };
+export { r as default };
 
 //# sourceMappingURL=queryform.es.js.map
