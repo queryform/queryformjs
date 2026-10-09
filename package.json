@@ -1,21 +1,25 @@
 {
   "name": "@queryform/queryformjs",
   "type": "module",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Queryform allows users to easily track query string parameters, save them to local storage and automatically populate form fields on their website. It is a dependency free JS module that connects your website to the Queryform applications backend.",
-  "main": "dist/queryform.umd.js",
-  "module": "dist/queryform.es.js",
+  "main": "./dist/queryform.umd.cjs",
+  "module": "./dist/queryform.es.js",
   "unpkg": "dist/queryform.umd.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/finish-build.js",
     "bump": "npm version patch",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "test": "node --test tests/*.test.js",
+    "test:package": "node --test tests/package/*.test.js",
+    "prepack": "npm run build"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "vite": "^5.4.2"
+    "vite": "^8.3.4",
+    "jsdom": "^26.1.0"
   },
   "files": [
     "dist"
@@ -30,5 +34,15 @@
   "homepage": "https://queryform.co",
   "keywords": [
     "queryform"
-  ]
+  ],
+  "types": "./dist/queryform.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/queryform.d.ts",
+      "import": "./dist/queryform.es.js",
+      "require": "./dist/queryform.umd.cjs"
+    },
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  }
 }

@@ -1,181 +1,119 @@
-# QueryformJS
+# QueryForm JS
 
-`QueryformJS` is a powerful JavaScript library designed to streamline the management of UTM parameters across your website forms. Whether you're fetching them from our API (Easy to use parameter tracking dashboard) or handling them locally in your code, this utility is invaluable for tracking campaign data and storing UTM parameters in local storage. It automatically populates form inputs with the corresponding values, providing a seamless way to capture attribution data directly within your forms.
+Capture campaign parameters from a landing-page URL, remember them across pages, and include them in a form submission. QueryForm JS has no runtime dependencies and supports plain HTML and JavaScript applications.
 
-## Use Case
+Use local configuration without an account or API. Use a QueryForm website ID when you want to manage mappings through the hosted dashboard.
 
-Are you or your client running ad or affiliate campaigns? Do you want to see attribution data directly in your form entries? With `QueryformJS`, you can effortlessly track UTM parameters, save them to local storage, and append them to your form inputs based on predefined settings. For example, if you're running a Google AdWords campaign and want to know if a user contacting you came from an ad, `QueryformJS` can display that information directly in the email you receive from the form submission. This saves you from having to check multiple analytics tools, making the data instantly accessible.
+## Install
 
-### Key Benefits:
-- **Direct Attribution Data**: See where your users are coming from directly in the form submissions, perfect for instant insight without needing to dive into analytics platforms.
-- **Flexible Integration**: As an ES module, `QueryformJS` integrates seamlessly with modern JavaScript frameworks like Vue, React, Next.js, or Nuxt.js.
-- **Simple Setup**: Import the package, initialize the class, and run the `init` function using one of the two provided setup methods:
-  - **API Driven** (paid): Fetch and manage UTM parameters via a centralized API.
-  - **Local Driven** (free): Handle UTM parameters locally with no external dependencies.
-
-### Using Queryform.co
-For an enhanced experience, consider using [Queryform.co](https://queryform.co), a platform that offers a clean and asynchronous interface for managing UTM parameters. With Queryform.co, you or your client can easily update parameters on the fly without needing to alter your code. This allows for dynamic and efficient management of your campaign tracking efforts.
-
-To learn more, visit [Queryform.co](https://queryform.co).
-
-## Installation
-
-You can install `QueryformJS` via npm:
-
-```bash
+```sh
 npm install @queryform/queryformjs
 ```
 
-```bash
-yarn add @queryform/queryformjs
-```
+The repository prepares version **0.2.0**. GitHub updates do not publish a new npm version; check the registry version before relying on the new API. To use this checkout directly, run `npm ci && npm run build` and serve the generated files from `dist/`.
 
-## Usage
-
-### Standard HTML Integration
-You can use `QueryformJS` in a standard HTML setup by including the script and initializing it when the page loads. Here’s an example pulling the latest release from unpkg:
+## Local configuration
 
 ```html
-<script src="https://unpkg.com/@queryform/queryformjs@latest/dist/queryform.umd.js" defer></script>
-<script type="text/javascript" defer>
-  window.addEventListener('load', function() {
-
-    // API Driven
-    const queryform = new Queryform('queryform-website-specific-api-key');
-    queryform.init();
-
-    // Local Driven
-    // const queryform = new Queryform();
-    // queryform.init({ debug: false, local: true }, [
-    //     { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
-    //     { param: 'utm_medium', class_name: 'qf_utm_medium' }
-    // ]);
-
-  });
+<form action="/contact" method="post">
+  <input type="hidden" name="utm_source" class="qf_utm_source">
+  <input type="hidden" name="utm_campaign" class="qf_utm_campaign">
+  <button type="submit">Send</button>
+</form>
+<script src="/queryform.umd.js"></script>
+<script>
+  const qf = new QueryForm();
+  qf.init({ local: true }, [
+    { param: 'utm_source', class_name: 'qf_utm_source' },
+    { param: 'utm_campaign', class_name: 'qf_utm_campaign' }
+  ]);
 </script>
 ```
-This approach is straightforward and can be used in any standard web environment where you want to quickly integrate QueryformJS. You may also download the latest code from github here: https://github.com/queryform/queryformjs
 
-### Nuxt 3 Plugin Integration
-For Nuxt 3 users, you can easily integrate QueryformJS as a plugin. Here’s an example of how to set it up:
+Serve `dist/queryform.umd.js` at the URL used above. Visit the page with `?utm_source=newsletter&utm_campaign=launch`, then navigate to another page on the same origin using the same configuration. Fields retain the captured values. Their `name` attributes are essential for normal form submissions.
 
-```js
-import Queryform from '@queryform/queryformjs/dist/queryform.es.js';
-
-export default defineNuxtPlugin(() => {
-  const nuxtApp = useNuxtApp();
-  nuxtApp.hook('page:finish', async () => {
-
-    // API Driven
-    const queryform = new Queryform('queryform-website-specific-api-key');
-    queryform.init();
-
-    // Local Driven
-    // const queryform = new Queryform();
-    // queryform.init({ debug: false, local: true }, [
-    //     { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
-    //     { param: 'utm_medium', class_name: 'qf_utm_medium' }
-    // ]);
-
-  });
-});
-```
-This setup ensures that QueryformJS runs every time a page is fully loaded, making it a great fit for Nuxt 3’s dynamic routing environment.
-
-### Next.js Integration
-In a Next.js project, you can integrate QueryformJS by using it in a custom hook or directly in your components/pages. Here’s an example using a custom hook:
+For a bundler or an ES module:
 
 ```js
-import { useEffect } from 'react';
-import Queryform from '@queryform/queryformjs/dist/queryform.es.js';
+import QueryForm from '@queryform/queryformjs';
 
-const useQueryform = () => {
-  useEffect(() => {
-    // API Driven
-    const queryform = new Queryform('queryform-website-specific-api-key');
-    queryform.init();
-
-    // Local Driven
-    // const queryform = new Queryform();
-    // queryform.init({ debug: false, local: true }, [
-    //     { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
-    //     { param: 'utm_medium', class_name: 'qf_utm_medium' }
-    // ]);
-  }, []);
-};
-
-export default useQueryform;
-```
-
-### Scenarios
-
-#### API Driven
-In this scenario, the domain parameters (UTMs) are retrieved from the Queryform API backend, where you can easily control your parameters from an easy to use interface that does not require code updates to adjust tracked query parameters.
-
-```js
-const queryform = new Queryform('queryform-website-specific-api-key');
-queryform.init();
-```
-
-#### Local Driven
-In this scenario, you can provide the UTM parameters locally, this provides a clean easy way for developers to deploy lead attribution tracking with a few lines of code for free. If you find that your client would appreciate a clean and easy dashboard to update these parameters on the fly, then we would appreciate a recommendation of our API backend where this library can connect to, using method 1 above.
-
-```js
-const queryform = new Queryform();
-queryform.init({ debug: false, local: true }, [
-    { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
-    { param: 'utm_medium', class_name: 'qf_utm_medium' }
+const qf = new QueryForm();
+const ready = await qf.init({ local: true }, [
+  { param: 'utm_source', class_name: 'qf_utm_source' }
 ]);
 ```
 
-## Parameter Formatting for Local Tracking
+CommonJS uses `const QueryForm = require('@queryform/queryformjs')`. TypeScript declarations are included. Browser scripts expose the case-sensitive global `QueryForm`.
 
-When using `QueryformJS` for local tracking, you'll define a set of parameters that map to specific fields in the query string and correspond to form inputs on your webpage. Here's how it works:
+## Managed configuration
 
-### Parameters Explained
-
-- **param**: This is the key that represents the field you are looking for in the query string. For example, if a user arrives at your site via a Google AdWords campaign, Google might send a parameter like `utm_campaign` in the URL. This would be the value you use for the `param` field.
-
-- **class_name**: This is the CSS class that `QueryformJS` will search for when looking to populate your form inputs. The class name can be applied directly to the input element (such as a hidden input field) or to a parent element that wraps the input. This flexibility allows you to organize your HTML as needed while still enabling `QueryformJS` to correctly find and populate the input.
-
-### Example
-
-Here’s an example of how to set up parameters for local tracking:
-
-```javascript
-const queryform = new Queryform();
-queryform.init({ local: true }, [
-    { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
-    { param: 'utm_medium', class_name: 'qf_utm_medium' }
-]);
+```js
+const qf = new QueryForm('your-public-website-id');
+const ready = await qf.init({ debug: true });
 ```
-In this example:
 
-- utm_campaign: This is the query string parameter that Google (or another service) might include in the URL.
-- qf_utm_campaign: This is the CSS class that QueryformJS will look for in your form inputs.
+For self-hosting, pass the API prefix as the second constructor argument:
 
-### HTML Example
-
-Given the above configuration, QueryformJS will look for form inputs like the following:
-```html
-<!-- Directly on the input element -->
-<input type="hidden" class="qf_utm_campaign" />
-
-<!-- Or on a parent element -->
-<div class="qf_utm_campaign">
-  <input type="hidden" />
-</div>
+```js
+const qf = new QueryForm('website-id', 'https://your-service.example/api/website/');
+await qf.init();
 ```
-QueryformJS will automatically find these elements, and if the corresponding utm_campaign parameter is found in the URL, or has been previously saved to local storage from a different time it will populate the input with the value from the query string.
 
-## Flexibility
+The API must return `{ "parameters": [{ "param": "utm_source", "class_name": "qf_utm_source" }] }`; an array response is also accepted. The hosted API checks the registered hostname and subscription. The website ID is public, not a credential. Network failures return `false`; `debug: true` logs diagnostic information.
 
-This setup allows you to easily track various UTM parameters and other query string values by defining the appropriate param and class_name pairs in your code. This makes QueryformJS a highly flexible tool for form tracking and campaign attribution.
+## Public API
 
-## Notes
-- LocalStorage is required to store and retrieve UTM parameters. This is what lets us track users over time from the same browser.
-- When using the local-driven approach, validate that the utms array is correctly formatted to avoid warnings.
+| Method | Behavior |
+| --- | --- |
+| `init(options?, mappings?)` | Resolves to `true` on success or `false` on failure. Options are `local` and `debug`, both false by default. Concurrent calls on one instance share its first initialization. |
+| `refresh()` | Captures the current URL and populates available form controls. Call after SPA navigation or inserting a form asynchronously. |
+| `getStoredParams()` | Returns configured `{ param, class_name }` mappings, retaining the 0.1.x getter shape. |
+| `getStoredParamValues()` | Returns captured values keyed by parameter name, each with `class_name` and `value`. |
+| `getSavedQueryformData()` | Compatibility snapshot containing `params`, `values`, and `cacheUntil: null`. |
+| `getCacheUntil()` | Returns `null`; version 0.2 no longer caches remote configuration in the browser. |
+| `clear()` | Clears this instance's attribution from memory and its storage key. Existing field values are not erased. |
 
-## License
+Imports are safe during server-side rendering; initialize on the client. In Vue, use `onMounted`; in React, initialize after the form mounts. For dynamically rendered forms, call `refresh()` once the controls exist. QueryForm emits bubbling `input` and `change` events only when a value changes; controlled framework inputs may require your application's state integration.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Storage and field behavior
+
+- Only configured query parameters are retained. The first value wins if a URL repeats a parameter. A present empty value clears prior attribution for that parameter.
+- Values are stored under `queryform_data:<websiteId>`, or `queryform_data:local` in local mode without an ID. Pass a distinct ID with local mode to isolate multiple configurations on one origin.
+- Persistence has no automatic expiration. Denied storage, quota errors, and corrupted JSON fall back to memory for the current instance.
+- A configured class may be on an input, textarea, select, or wrapper. All supported controls inside a wrapper receive the value. Password, file, checkbox, radio, and button inputs are excluded.
+- Class names are treated literally. Configuration must provide a nonempty parameter name and a single nonempty class token.
+- Initialization waits for DOM readiness. There is no automatic DOM observer, polling, or SPA router hook.
+- Initialize only after consent when required by your application. On withdrawal, call `clear()` and stop invoking capture methods. `refresh()` will capture the current URL again.
+
+## Migrating from 0.1.x
+
+Version 0.2 changes storage and initialization behavior. Review these changes before deploying:
+
+1. Shared `queryform` and `queryform_data` storage is not imported. Scoped storage prevents one website's configuration from affecting another, but starts a new attribution history. Old keys remain until your application explicitly removes them.
+2. Remote configuration is fetched on each sequential `init()` call. Previous browser caching mixed configurations and depended on ambiguous timezone strings. This can increase API request counts; prefer `refresh()` for SPA navigation after initial configuration.
+3. `init()` now resolves to a boolean. Invalid mappings and failed requests return `false`; diagnostics are enabled with `debug: true`.
+4. `getStoredParams()` still returns mappings and `getStoredParamValues()` still returns captured values. Cache getters return `null`. Internal 0.1.x helpers are no longer supported public entry points.
+5. Empty URL values replace old values. Field updates now notify listeners, and wrappers populate every supported descendant.
+6. The package entry point supports CommonJS via `.cjs` while retaining `dist/queryform.umd.js` for browser scripts and `dist/queryform.es.js` for existing ESM imports.
+
+## Development
+
+Use Node.js 22.12+ and npm:
+
+```sh
+npm ci
+npm test
+npm run build
+npm run test:package
+npm run dev
+```
+
+The development server opens `tests/index.html`, a local-only example. The tests exercise storage failures, malformed API data, isolation, dynamic fields, events, and the actual browser/ESM/CommonJS distributions. Edit `src/queryform.js`, then rebuild the checked-in `dist/` artifacts. Commit `package-lock.json` with dependency changes.
+
+Before publishing a package, run the checks above and `npm pack --dry-run`. The repository's CI builds and tests changes; it does not automatically publish to npm.
+
+## Contributing and license
+
+Open a focused issue with a reproduction and expected behavior. Include regression tests with bug fixes. Avoid posting sensitive visitor data or credentials in examples.
+
+The package manifest declares ISC. This update preserves that declaration and corrects the old README's conflicting MIT claim. A full license file and confirmed copyright attribution still need to be supplied by the project owner before a package release.

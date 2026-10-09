@@ -1,192 +1,111 @@
-class f {
-  constructor(a = null, e = "https://queryform.co/api/website/") {
-    this.websiteId = a, this.domainUTMs = [], this.apiRoute = e, this.debug = !1, this.local = !1, this.cacheUntil = null;
-  }
-  /**
-   * Fetch domain parameters from the API
-   * @returns {Promise<void>}
-   */
-  async fetchDomainParams() {
-    this.logMessage("Fetching parameters from queryform api.");
-    try {
-      const a = await fetch(`${this.apiRoute}${this.websiteId}`);
-      if (a.ok) {
-        const e = await a.json();
-        this.domainUTMs = e.parameters;
-        const t = a.headers.get("X-Queryform-Cache-Until"), s = this.getSavedQueryformData().values || {};
-        this.saveQueryformData(e.parameters, s, t);
-      } else
-        console.warn("Failed to fetch domain parameters:", a.statusText);
-    } catch (a) {
-      console.warn("Error fetching domain parameters:", a);
-    }
-  }
-  /**
-   * Initialize the Queryform
-   * @param {Object} config - Configuration object
-   * @param {boolean} config.debug - Enable debug mode
-   * @returns {void}
-   * @example
-   * Retrieve domain parameters from Queryform API
-   * const queryform = new Queryform('xxxx-xxxx-xxxx-xxxx');
-   * queryform.init();
-   * @example
-   * Use local domain parameters
-   * const queryform = new Queryform();
-   * queryform.init({ local: true }, [ { param: 'utm_source', class_name: 'qf_utm_source' } ]);
-   */
-  async init(a = { debug: !1, local: !1 }, e = []) {
-    if (this.debug = a.debug, this.local = a.local, this.local)
-      this.fetchLocalParams(e);
-    else {
-      const t = this.getCacheUntil(), r = new Date(t), s = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "America/New_York" }));
-      t && r > s ? this.logMessage(`Cache is still valid until ${t}`) : await this.fetchDomainParams();
-    }
-    this.configureQueryform();
-  }
-  /**
-   * Fetch local domain parameters
-   * @param {Array} utms - Local domain parameters
-   *
-   *
-   * @returns {void}
-   * @private
-   */
-  fetchLocalParams(a) {
-    if (!Array.isArray(a)) {
-      console.warn("Invalid utms array:", a);
-      return;
-    }
-    if (a.some(({ param: r, class_name: s }) => !r || !s)) {
-      console.warn("Invalid utms array sub-items:", a);
-      return;
-    }
-    const t = this.getSavedQueryformData().values || {};
-    this.saveQueryformData(a, t, null);
-  }
-  /**
-   * Configure the Queryform
-   * @returns {void}
-   * @private
-   */
-  configureQueryform() {
-    const a = this.parseURLParams();
-    this.storeParams(a);
-    const e = this.getSavedQueryformData(), t = e.params, r = e.values;
-    r && Object.keys(r).length > 0 && (this.logMessage("Populating form inputs."), this.populateFormInputs(r, t));
-  }
-  /**
-   * Log initialization message
-   * @returns {void}
-   * @private
-   */
-  logMessage(a) {
-    this.debug && console.log(
-      `%c Queryform%c ${a}`,
-      "background: #222; color: #2563eb; padding: 10px;",
-      "background: #222; color: #777; font-size:8px; padding: 12px 10px;"
-    );
-  }
-  /**
-   * Check if localStorage is available
-   * @returns {boolean}
-   * @private
-   */
-  isLocalStorageAvailable() {
-    return typeof Storage < "u";
-  }
-  /**
-   * Parse URL parameters
-   * @returns {Object}
-   * @private
-   */
-  parseURLParams() {
-    const a = new URLSearchParams(window.location.search);
-    if (!a) return;
-    const e = {};
-    return this.getSavedQueryformData().params.forEach(({ param: r }) => {
-      a.has(r) && (e[r] = a.get(r), this.logMessage(`Valid URL parameter found [${r}].`));
-    }), Object.keys(e).length > 0 ? e : null;
-  }
-  /**
-   * Store URL parameters in localStorage
-   * @param {Object} queryParams - URL parameters
-   * @returns {Object}
-   * @private
-   */
-  storeParams(a) {
-    if (!this.isLocalStorageAvailable() || !a) return;
-    const e = this.getSavedQueryformData();
-    e.params.forEach(({ param: t, class_name: r }) => {
-      a[t] && (e.values[t] = {
-        class_name: r,
-        value: a[t]
-      });
-    }), this.saveQueryformData(e.params, e.values, e.cacheUntil);
-  }
-  /**
-   * Get stored parameters from localStorage
-   * @returns {Object}
-   */
-  getStoredParamValues() {
-    return this.isLocalStorageAvailable() ? this.getSavedQueryformData().values : {};
-  }
-  /**
-   * Get stored parameters from localStorage
-   * @returns {Object}
-  */
-  getStoredParams() {
-    return this.isLocalStorageAvailable() ? this.getSavedQueryformData().params : {};
-  }
-  /**
-   * Get last fetched time
-   * @returns {string}
-   * @private
-   */
-  getCacheUntil() {
-    return this.getSavedQueryformData().cacheUntil;
-  }
-  /**
-   * Get stored parameters from localStorage
-   * @returns {Object}
-  */
-  getSavedQueryformData() {
-    return this.isLocalStorageAvailable() ? JSON.parse(localStorage.getItem("queryform")) || {} : {};
-  }
-  saveQueryformData(a, e, t) {
-    if (this.isLocalStorageAvailable())
-      return localStorage.setItem("queryform", JSON.stringify({
-        params: a,
-        values: e,
-        cacheUntil: t
-      })), this.getSavedQueryformData();
-  }
-  /**
-   * Populate form inputs with stored parameters
-   * @param {Object} storedParams - Stored parameters
-   * @param {Array} domainUTMs - Domain parameters
-   * @returns {void}
-   * @private
-   */
-  populateFormInputs(a, e) {
-    const t = Object.values(a).map(
-      ({ class_name: s }) => `.${s}`
-    );
-    document.querySelectorAll(t.join(",")).forEach((s) => {
-      var l;
-      const i = s.tagName.toLowerCase() === "input" ? s : s.querySelector("input");
-      if (!i) return;
-      const n = s.className.split(" ").find(
-        (o) => t.includes(`.${o}`)
-      );
-      if (n) {
-        const o = e.find(({ class_name: c }) => c === n);
-        o && (i.value = ((l = a[o.param]) == null ? void 0 : l.value) || "");
-      }
-    });
-  }
-}
-export {
-  f as default
+//#region src/queryform.js
+var e = class {
+	constructor(e = null, t = "https://queryform.co/api/website/") {
+		this.websiteId = e, this.apiRoute = t, this.domainUTMs = [], this.storageKey = `queryform_data:${e || "local"}`, this.values = {}, this.storageFailed = !1, this.pending = null;
+	}
+	async init(e = {}, t = []) {
+		if (typeof window > "u" || typeof document > "u") return !1;
+		if (this.pending) return this.pending;
+		this.pending = this.initialize(e, t);
+		try {
+			return await this.pending;
+		} finally {
+			this.pending = null;
+		}
+	}
+	async initialize(e, t) {
+		try {
+			let n = t;
+			if (!e.local) {
+				if (!this.websiteId) throw Error("A website ID is required for remote configuration.");
+				let e = new AbortController(), t = setTimeout(() => e.abort(), 1e4);
+				try {
+					let t = await fetch(`${this.apiRoute}${encodeURIComponent(this.websiteId)}`, {
+						signal: e.signal,
+						credentials: "omit",
+						headers: { Accept: "application/json" }
+					});
+					if (!t.ok) throw Error(`Configuration request failed (${t.status}).`);
+					let r = await t.json();
+					n = Array.isArray(r) ? r : r?.parameters;
+				} finally {
+					clearTimeout(t);
+				}
+			}
+			if (!Array.isArray(n) || n.some((e) => !e || typeof e.param != "string" || !e.param || typeof e.class_name != "string" || !e.class_name || /\s/.test(e.class_name))) throw Error("Expected an array of { param, class_name } mappings.");
+			return this.domainUTMs = n, this.values = this.getStoredParamValues(), this.capture(), document.readyState === "loading" && await new Promise((e) => document.addEventListener("DOMContentLoaded", e, { once: !0 })), this.populate(), e.debug && console.info("QueryForm: parameters synced."), !0;
+		} catch (t) {
+			return this.domainUTMs = [], e.debug && console.warn("QueryForm:", t), !1;
+		}
+	}
+	getStoredParamValues() {
+		let e = this.values;
+		try {
+			let t = this.storageFailed ? null : window.localStorage.getItem(this.storageKey);
+			t !== null && (e = JSON.parse(t));
+		} catch {}
+		return Object.fromEntries(this.domainUTMs.flatMap(({ param: t, class_name: n }) => {
+			let r = e && Object.hasOwn(e, t) ? e[t] : null;
+			return r && typeof r.value == "string" ? [[t, {
+				class_name: n,
+				value: r.value
+			}]] : [];
+		}));
+	}
+	getStoredParams() {
+		return this.domainUTMs.map((e) => ({ ...e }));
+	}
+	getSavedQueryformData() {
+		return {
+			params: this.getStoredParams(),
+			values: this.getStoredParamValues(),
+			cacheUntil: null
+		};
+	}
+	getCacheUntil() {
+		return null;
+	}
+	capture() {
+		let e = new URLSearchParams(window.location.search);
+		for (let { param: t, class_name: n } of this.domainUTMs) e.has(t) && Object.defineProperty(this.values, t, {
+			value: {
+				class_name: n,
+				value: e.get(t)
+			},
+			enumerable: !0,
+			configurable: !0,
+			writable: !0
+		});
+		try {
+			window.localStorage.setItem(this.storageKey, JSON.stringify(this.values));
+		} catch {
+			this.storageFailed = !0;
+		}
+	}
+	refresh() {
+		typeof document < "u" && typeof window < "u" && (this.values = this.getStoredParamValues(), this.capture(), this.populate());
+	}
+	populate() {
+		for (let { param: e, class_name: t } of this.domainUTMs) {
+			if (!Object.hasOwn(this.values, e)) continue;
+			let n = /* @__PURE__ */ new Set();
+			for (let e of Array.from(document.getElementsByClassName(t))) if (e.matches("input, textarea, select")) n.add(e);
+			else for (let t of e.querySelectorAll("input, textarea, select")) n.add(t);
+			for (let t of n) {
+				if (t.matches("input[type=\"file\"], input[type=\"password\"], input[type=\"checkbox\"], input[type=\"radio\"], input[type=\"submit\"], input[type=\"button\"], input[type=\"reset\"]")) continue;
+				let n = this.values[e].value;
+				t.value !== n && (t.value = n, t.dispatchEvent(new Event("input", { bubbles: !0 })), t.dispatchEvent(new Event("change", { bubbles: !0 })));
+			}
+		}
+	}
+	clear() {
+		this.values = {}, this.storageFailed = !0;
+		try {
+			window.localStorage.removeItem(this.storageKey);
+		} catch {}
+	}
 };
+//#endregion
+export { e as default };
+
 //# sourceMappingURL=queryform.es.js.map

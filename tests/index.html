@@ -1,42 +1,37 @@
-<!-- html boilerplate -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Tests</title>
-    <script src="../dist/queryform.umd.js" defer></script>
-    <script type="text/javascript" defer>
-        window.addEventListener('load', function () {
-            // Queryform API
-            const qf = new QueryForm('9cf00322-cc73-4df0-98e4-92c36f54dcfe', 'https://queryform.test/api/website/');
-            qf.init({
-                debug: true
-            });
-
-            // Local Paramaters
-            // const qf = new QueryForm();
-            // qf.init({
-            //     debug: true,
-            //     local: true
-            // },[
-            //     { param: 'utm_campaign', class_name: 'qf_utm_campaign'},
-            //     { param: 'utm_source', class_name: 'qf_utm_source'},
-            //     { param: 'utm_medium', class_name: 'qf_utm_medium'},
-            //     { param: 'utm_term', class_name: 'qf_utm_term'},
-            //     { param: 'utm_content', class_name: 'qf_utm_content'}
-            // ]);
-        });
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QueryForm local example</title>
 </head>
 <body>
-    <h1>Queryform Testing</h1>
-    <form>
-        <input type="text" class="qf_utm_campaign" placeholder="qf_utm_campaign">
-        <input type="text" class="qf_utm_source" placeholder="qf_utm_source">
-        <input type="text" class="qf_utm_medium" placeholder="qf_utm_medium">
-        <input type="text" class="qf_utm_term" placeholder="qf_utm_term">
-        <input type="text" class="qf_utm_content" placeholder="qf_utm_content">
-        <input type="submit" value="Submit">
-    </form>
+  <h1>QueryForm local example</h1>
+  <p><a href="?utm_source=newsletter&utm_campaign=launch">Capture example campaign</a></p>
+  <p><a href="./index.html">Visit without URL parameters</a> to check persistence.</p>
+  <form>
+    <label>Source <input name="utm_source" class="qf_utm_source" readonly></label>
+    <label>Campaign <input name="utm_campaign" class="qf_utm_campaign" readonly></label>
+    <button>Show submission</button>
+  </form>
+  <button id="clear" type="button">Clear stored attribution</button>
+  <pre id="output" aria-live="polite"></pre>
+  <script type="module">
+    import QueryForm from '../src/queryform.js';
+    const qf = new QueryForm();
+    await qf.init({ local: true }, [
+      { param: 'utm_source', class_name: 'qf_utm_source' },
+      { param: 'utm_campaign', class_name: 'qf_utm_campaign' },
+    ]);
+    document.querySelector('form').addEventListener('submit', event => {
+      event.preventDefault();
+      document.querySelector('#output').textContent = JSON.stringify(Object.fromEntries(new FormData(event.target)), null, 2);
+    });
+    document.querySelector('#clear').addEventListener('click', () => {
+      qf.clear();
+      document.querySelector('form').reset();
+      document.querySelector('#output').textContent = 'Stored attribution cleared. The current URL can be captured again by initialization or refresh.';
+    });
+  </script>
 </body>
 </html>
